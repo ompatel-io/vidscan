@@ -11,7 +11,7 @@ import datetime
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURR_DIR, "..", ".."))
 
-DEFAULT_VIDSCAN_PATH = os.path.join(ROOT_DIR, "cli", "vidscan.py") 
+DEFAULT_VIDSCAN_PATH = os.path.join(ROOT_DIR, "cli", "src", "vidscan", "__main__.py") 
 DEFAULT_BENCHMARK_DATA_DIR = os.path.join(ROOT_DIR, "VidScan_Benchmark_Data")
 
 OUTPUT_CSV  = os.path.join(CURR_DIR, "cli_benchmark.csv")
@@ -49,7 +49,7 @@ def main():
         "--vidscan",
         type=str,
         default=DEFAULT_VIDSCAN_PATH,
-        help="Path to vidscan.py"
+        help="Path to vidscan"
     )
     args = parser.parse_args()
 

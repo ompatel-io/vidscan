@@ -16,7 +16,7 @@ See [cli/README.md](cli/README.md) for full documentation.
 
 > Under development
 
-[Live app](https://ompatel100.github.io/vidscan/)
+[Live app](https://ompatel-io.github.io/vidscan/)
 
 [Source](web/)
 

@@ -404,13 +404,7 @@ def scan_videos_concurrently(
         print(ui.info("Cancelling and saving partial data..."))
 
     finally:
-        if sys.version_info >= (3, 9):
-            executor.shutdown(wait=False, cancel_futures=True)
-            
-        else:
-            for future in future_to_video:
-                future.cancel()
-            executor.shutdown(wait=False)
+        executor.shutdown(wait=False, cancel_futures=True)
 
     print(f"\nProcessing complete in {time.time() - start_time:.2f} seconds.")
 

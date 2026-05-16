@@ -9,7 +9,7 @@ import time
 import csv
 import json
 import datetime
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any, no_type_check
 from collections.abc import Iterator
 
@@ -96,13 +96,8 @@ def format_windows_max_path(path: str) -> str:
 # UI
 # ==================================================================================
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class UI:
-    __slots__ = (
-        'is_terminal', 'bar_fill', 'bar_empty', 'spinner',
-        'color_red', 'color_yellow', 'color_green', 'color_cyan', 'color_reset'
-    )
-    
     is_terminal: bool
     bar_fill: str
     bar_empty: str
@@ -173,51 +168,43 @@ def get_ui() -> UI:
 # MODELS
 # ==================================================================================
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class VideoFile:
-    __slots__ = ('name', 'duration', 'mtime', 'size')
-
     name: str
     duration: float
     mtime: float
     size: int
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class FailedVideo:
-    __slots__ = ('path', 'error', 'size')
-    
     path: str
-    error: str
     size: int
+    error: str = ""
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class DiscoveredFile:
-    __slots__ = ('path', 'dirpath', 'name', 'mtime', 'size', 'error')
-
     path: str
     dirpath: str
     name: str
     mtime: float
     size: int
-    error: str
+    error: str = ""
 
-@dataclass
+@dataclass(slots=True)
 class FolderData:
-    __slots__ = ('path', 'videos', 'total_seconds', 'total_size', 'video_count', 'last_modified')
-    
     path: str
-    videos: list[VideoFile]
-    total_seconds: float
-    total_size: int
-    video_count: int
-    last_modified: float
+    videos: list[VideoFile] = field(default_factory=list[VideoFile])
+    total_seconds: float = 0
+    total_size: int = 0
+    video_count: int = 0
+    last_modified: float = 0
     
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ScanResult:
-    folders: list[FolderData]
-    total_videos: int
-    success_count: int
-    failed_videos_data: list[FailedVideo]
+    folders: list[FolderData] = field(default_factory=list[FolderData])
+    total_videos: int = 0
+    success_count: int = 0
+    failed_videos_data: list[FailedVideo] = field(default_factory=list[FailedVideo])
     
 # ==================================================================================
 # SCANNER
@@ -239,13 +226,13 @@ def stream_video_files(root_folder: str, video_extensions: set[str], excluded_fo
                         ext = os.path.splitext(entry.name)[1].lower()
                         if ext in video_extensions:
                             try:
+                                stat = entry.stat()
                                 yield DiscoveredFile(
                                     path=entry.path, 
                                     dirpath=current_dir, 
                                     name=entry.name, 
-                                    mtime=entry.stat().st_mtime, 
-                                    size=entry.stat().st_size,
-                                    error=""
+                                    mtime=stat.st_mtime, 
+                                    size=stat.st_size,
                                 )
                                 
                             except OSError as e:
@@ -312,12 +299,7 @@ def scan_videos_concurrently(
         total_videos = sum(1 for _ in stream_video_files(root_folder, video_extensions, excluded_folders))
 
         if total_videos == 0:
-            return ScanResult(
-            folders=list(folder_data.values()),
-            total_videos=0,
-            success_count=0,
-            failed_videos_data=[]
-        )
+            return ScanResult()
         
         print(f"Found {ui.info(total_videos)} video files.", end=" ")
 
@@ -356,14 +338,7 @@ def scan_videos_concurrently(
 
             if duration > 0:
                 if file_metadata.dirpath not in folder_data:
-                    folder_data[file_metadata.dirpath] = FolderData(
-                        path=file_metadata.dirpath,
-                        videos=[],
-                        total_seconds=0.0,
-                        total_size=0,
-                        video_count=0,
-                        last_modified=0.0
-                    )
+                    folder_data[file_metadata.dirpath] = FolderData(path=file_metadata.dirpath)
                 
                 folder_data[file_metadata.dirpath].videos.append(
                     VideoFile(
@@ -554,7 +529,7 @@ def get_txt_report_detailed_lines(sorted_data: list[FolderData], failed_count: i
 
     return lines
 
-def get_failed_videos_report_lines(failed_videos_data: list["FailedVideo"]) -> list[str]:
+def get_failed_videos_report_lines(failed_videos_data: list[FailedVideo]) -> list[str]:
     divide_line_length = 60
 
     lines = [
@@ -588,7 +563,7 @@ def write_txt_and_failed_videos_report(
     sorted_data: list[FolderData], 
     output_path: str, 
     template: str, 
-    failed_videos_data: list["FailedVideo"], 
+    failed_videos_data: list[FailedVideo], 
     failed_videos_report_path: str, 
     timestamp: datetime.datetime, 
     include_size: bool

@@ -10,7 +10,8 @@ import csv
 import json
 import datetime
 from dataclasses import dataclass, asdict
-from typing import Dict, Iterator, List, Any, Tuple, Set, no_type_check
+from typing import Any, no_type_check
+from collections.abc import Iterator
 
 # ==================================================================================
 # CONSTANTS
@@ -205,7 +206,7 @@ class FolderData:
     __slots__ = ('path', 'videos', 'total_seconds', 'total_size', 'video_count', 'last_modified')
     
     path: str
-    videos: List[VideoFile]
+    videos: list[VideoFile]
     total_seconds: float
     total_size: int
     video_count: int
@@ -213,16 +214,16 @@ class FolderData:
     
 @dataclass(frozen=True)
 class ScanResult:
-    folders: List[FolderData]
+    folders: list[FolderData]
     total_videos: int
     success_count: int
-    failed_videos_data: List[FailedVideo]
+    failed_videos_data: list[FailedVideo]
     
 # ==================================================================================
 # SCANNER
 # ==================================================================================
 
-def stream_video_files(root_folder: str, video_extensions: Set[str], excluded_folders: Set[str]) -> Iterator[DiscoveredFile]:
+def stream_video_files(root_folder: str, video_extensions: set[str], excluded_folders: set[str]) -> Iterator[DiscoveredFile]:
     stack = [root_folder]
     while stack:
         current_dir = stack.pop()
@@ -259,7 +260,7 @@ def stream_video_files(root_folder: str, video_extensions: Set[str], excluded_fo
         except OSError:
             continue
 
-def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> Tuple[float, str]:
+def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> tuple[float, str]:
     try:
         command = [ # type: ignore
             FFPROBE_PATH, 
@@ -293,15 +294,15 @@ def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> Tuple[flo
 
 def scan_videos_concurrently(
     root_folder: str,
-    video_extensions: Set[str],
-    excluded_folders: Set[str],
+    video_extensions: set[str],
+    excluded_folders: set[str],
     num_workers: int,
     ffprobe_timeout_sec:float,
     fast_start_mode:bool,
     ui: UI
 ) -> ScanResult:
 
-    folder_data: Dict[str, FolderData] = {}
+    folder_data: dict[str, FolderData] = {}
     total_videos = 0
 
     start_time = time.time()
@@ -323,13 +324,13 @@ def scan_videos_concurrently(
     print(f"Processing with {num_workers} workers...")
     
     videos_processed = 0
-    failed_videos_data: List[FailedVideo] = []
+    failed_videos_data: list[FailedVideo] = []
 
     last_print_time = 0.0
     progress_update_interval = 0.1
 
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=num_workers)
-    future_to_video: Dict[concurrent.futures.Future[Tuple[float, str]], DiscoveredFile] = {}
+    future_to_video: dict[concurrent.futures.Future[tuple[float, str]], DiscoveredFile] = {}
 
     try:
         for file_metadata in stream_video_files(root_folder, video_extensions, excluded_folders):
@@ -444,7 +445,7 @@ def scan_videos_concurrently(
 # ==================================================================================
 
 @no_type_check
-def get_sorted_data(folders: List[FolderData], sort_by: str, reverse: bool) -> List[FolderData]:
+def get_sorted_data(folders: list[FolderData], sort_by: str, reverse: bool) -> list[FolderData]:
     sort_keys = {
         'name':     lambda f: os.path.basename(f.path).lower(),
         'duration': lambda f: f.total_seconds,
@@ -457,7 +458,7 @@ def get_sorted_data(folders: List[FolderData], sort_by: str, reverse: bool) -> L
     
     return sorted(folders, key=key_func, reverse=reverse)
 
-def get_txt_report_summary_lines(sorted_data: List[FolderData], failed_count: int, include_size: bool) -> List[str]:
+def get_txt_report_summary_lines(sorted_data: list[FolderData], failed_count: int, include_size: bool) -> list[str]:
     divide_line_length = 60 if include_size else 45
 
     lines = [
@@ -505,7 +506,7 @@ def get_txt_report_summary_lines(sorted_data: List[FolderData], failed_count: in
 
     return lines
 
-def get_txt_report_detailed_lines(sorted_data: List[FolderData], failed_count: int, include_size: bool) -> List[str]:
+def get_txt_report_detailed_lines(sorted_data: list[FolderData], failed_count: int, include_size: bool) -> list[str]:
     divide_line_length = 75 if include_size else 60
 
     lines = [
@@ -559,7 +560,7 @@ def get_txt_report_detailed_lines(sorted_data: List[FolderData], failed_count: i
 
     return lines
 
-def get_failed_videos_report_lines(failed_videos_data: List["FailedVideo"]) -> List[str]:
+def get_failed_videos_report_lines(failed_videos_data: list["FailedVideo"]) -> list[str]:
     divide_line_length = 60
 
     lines = [
@@ -590,14 +591,14 @@ def get_failed_videos_report_lines(failed_videos_data: List["FailedVideo"]) -> L
     return lines
 
 def write_txt_and_failed_videos_report(
-    sorted_data: List[FolderData], 
+    sorted_data: list[FolderData], 
     output_path: str, 
     template: str, 
-    failed_videos_data: List["FailedVideo"], 
+    failed_videos_data: list["FailedVideo"], 
     failed_videos_report_path: str, 
     timestamp: datetime.datetime, 
     include_size: bool
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     
     failed_count = len(failed_videos_data)
 
@@ -627,12 +628,12 @@ def write_txt_and_failed_videos_report(
     return report_content, failed_videos_report_content
 
 def write_csv_report(
-    sorted_data: List[FolderData], 
+    sorted_data: list[FolderData], 
     output_path: str, 
     root_folder: str, 
     total_videos: int, 
     success_count: int, 
-    failed_videos_data: List[FailedVideo], 
+    failed_videos_data: list[FailedVideo], 
     timestamp: datetime.datetime
 ):
     with open(output_path, 'w', newline='', encoding='utf-8') as f:
@@ -694,19 +695,19 @@ def write_csv_report(
         writer.writerow(['Report Generated At', timestamp.strftime('%Y-%m-%d %H:%M:%S'), '', '', '', '', ''])
 
 def write_json_report(
-    sorted_data: List[FolderData], 
+    sorted_data: list[FolderData], 
     output_path: str, 
     total_videos: int, 
     success_count: int, 
-    failed_videos_data: List[FailedVideo], 
+    failed_videos_data: list[FailedVideo], 
     timestamp: datetime.datetime
 ):
     total_vid_size_successful = 0
     total_seconds = 0
-    details_list: List[Dict[str, Any]] = []
+    details_list: list[dict[str, Any]] = []
     
     for folder in sorted_data:
-        videos_formatted: List[Dict[str, Any]] = []
+        videos_formatted: list[dict[str, Any]] = []
         for video_data in sorted(folder.videos, key=lambda x: x.name):
             video_data_copy = asdict(video_data)
             video_data_copy['size_formatted'] = format_bytes(video_data.size)
@@ -729,7 +730,7 @@ def write_json_report(
         })
     
     total_vid_size_failed = 0
-    failed_videos_formatted: List[Dict[str, Any]] = []
+    failed_videos_formatted: list[dict[str, Any]] = []
     
     for failed_video in sorted(failed_videos_data, key=lambda x: x.path):
         failed_video_copy = asdict(failed_video)
@@ -738,7 +739,7 @@ def write_json_report(
         
         total_vid_size_failed += failed_video.size
 
-    report_structure: Dict[str, Any] = {
+    report_structure: dict[str, Any] = {
         "summary": {
             "total_folders": len(sorted_data),
             "total_videos_discovered": total_videos,
@@ -915,7 +916,7 @@ def main():
                 print(f"You can also change {ui.info('DEFAULT_VIDEO_EXTENSIONS')} at the top of the script permanently.")
             sys.exit(0)
 
-        sorted_data: List[FolderData] = get_sorted_data(
+        sorted_data: list[FolderData] = get_sorted_data(
         folders=scan_result.folders,
         sort_by=args.sort_by,
         reverse=(args.sort_order == 'desc')

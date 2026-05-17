@@ -9,8 +9,8 @@ import time
 import csv
 import json
 import datetime
-from dataclasses import dataclass, asdict, field
-from typing import Any, no_type_check
+from dataclasses import dataclass, field
+from typing import Any, no_type_check, TypedDict
 from collections.abc import Iterator
 
 # ==================================================================================
@@ -205,6 +205,51 @@ class ScanResult:
     total_videos: int = 0
     success_count: int = 0
     failed_videos_data: list[FailedVideo] = field(default_factory=list[FailedVideo])
+
+class VideoJSON(TypedDict):
+    name: str
+    duration: float
+    mtime: float
+    size: int
+    size_formatted: str
+    duration_formatted: str
+
+class FolderJSON(TypedDict):
+    folder_path: str
+    video_count: int
+    total_seconds: float
+    total_duration_formatted: str
+    total_videos_size_bytes: int
+    total_videos_size_formatted: str
+    last_modified_timestamp: float
+    last_modified_formatted: str
+    videos: list[VideoJSON]
+
+class FailedVideoJSON(TypedDict):
+    path: str
+    size: int
+    error: str
+    size_formatted: str
+
+class ReportSummaryJSON(TypedDict):
+    total_folders: int
+    total_videos_discovered: int
+    successful_videos: int
+    failed_videos_count: int
+    total_duration_seconds: float
+    total_duration_formatted: str
+    total_successful_videos_size_bytes: int
+    total_successful_videos_size_formatted: str
+    total_failed_videos_size_bytes: int
+    total_failed_videos_size_formatted: str
+    total_videos_size_bytes: int
+    total_videos_size_formatted: str
+    generated_at: str
+
+class ReportJSON(TypedDict):
+    summary: ReportSummaryJSON
+    details: list[FolderJSON]
+    failed_videos: list[FailedVideoJSON]
     
 # ==================================================================================
 # SCANNER
@@ -672,61 +717,67 @@ def write_json_report(
     timestamp: datetime.datetime
 ):
     total_vid_size_successful = 0
-    total_seconds = 0
-    details_list: list[dict[str, Any]] = []
+    total_seconds = 0.0
+    details_list: list[FolderJSON] = []
     
     for folder in sorted_data:
-        videos_formatted: list[dict[str, Any]] = []
+        videos_formatted: list[VideoJSON] = []
         for video_data in sorted(folder.videos, key=lambda x: x.name):
-            video_data_copy = asdict(video_data)
-            video_data_copy['size_formatted'] = format_bytes(video_data.size)
-            video_data_copy['duration_formatted'] = format_seconds_hms(video_data.duration)
-            videos_formatted.append(video_data_copy)
+            videos_formatted.append(VideoJSON(
+                name=video_data.name,
+                duration=video_data.duration,
+                mtime=video_data.mtime,
+                size=video_data.size,
+                size_formatted=format_bytes(video_data.size),
+                duration_formatted=format_seconds_hms(video_data.duration),
+            ))
         
         total_seconds += folder.total_seconds
         total_vid_size_successful += folder.total_size
 
-        details_list.append({
-            "folder_path": folder.path,
-            "video_count": folder.video_count,
-            "total_seconds": folder.total_seconds,
-            "total_duration_formatted": format_seconds_hms(folder.total_seconds),
-            "total_videos_size_bytes": folder.total_size,
-            "total_videos_size_formatted": format_bytes(folder.total_size),
-            "last_modified_timestamp": folder.last_modified,
-            "last_modified_human": datetime.datetime.fromtimestamp(folder.last_modified).isoformat(),
-            "videos": videos_formatted
-        })
+        details_list.append(FolderJSON(
+            folder_path=folder.path,
+            video_count=folder.video_count,
+            total_seconds=folder.total_seconds,
+            total_duration_formatted=format_seconds_hms(folder.total_seconds),
+            total_videos_size_bytes=folder.total_size,
+            total_videos_size_formatted=format_bytes(folder.total_size),
+            last_modified_timestamp=folder.last_modified,
+            last_modified_formatted=datetime.datetime.fromtimestamp(folder.last_modified).isoformat(),
+            videos=videos_formatted,
+        ))
     
     total_vid_size_failed = 0
-    failed_videos_formatted: list[dict[str, Any]] = []
+    failed_videos_formatted: list[FailedVideoJSON] = []
     
     for failed_video in sorted(failed_videos_data, key=lambda x: x.path):
-        failed_video_copy = asdict(failed_video)
-        failed_video_copy['size_formatted'] = format_bytes(failed_video.size)
-        failed_videos_formatted.append(failed_video_copy)
-        
+        failed_videos_formatted.append(FailedVideoJSON(
+            path=failed_video.path,
+            size=failed_video.size,
+            error=failed_video.error,
+            size_formatted=format_bytes(failed_video.size),
+        ))
         total_vid_size_failed += failed_video.size
 
-    report_structure: dict[str, Any] = {
-        "summary": {
-            "total_folders": len(sorted_data),
-            "total_videos_discovered": total_videos,
-            "successful_videos": success_count,
-            "failed_videos_count": len(failed_videos_data),
-            "total_duration_seconds": round(total_seconds, 2),
-            "total_duration_formatted": format_seconds_hms(total_seconds),
-            "total_successful_videos_size_bytes": total_vid_size_successful,
-            "total_successful_videos_size_formatted": format_bytes(total_vid_size_successful),
-            "total_failed_videos_size_bytes": total_vid_size_failed,
-            "total_failed_videos_size_formatted": format_bytes(total_vid_size_failed),
-            "total_videos_size_bytes": total_vid_size_successful + total_vid_size_failed,
-            "total_videos_size_formatted": format_bytes(total_vid_size_successful + total_vid_size_failed),
-            "generated_at": timestamp.isoformat()
-        },
-        "details": details_list,
-        "failed_videos": failed_videos_formatted,
-    }
+    report_structure = ReportJSON(
+        summary=ReportSummaryJSON(
+            total_folders=len(sorted_data),
+            total_videos_discovered=total_videos,
+            successful_videos=success_count,
+            failed_videos_count=len(failed_videos_data),
+            total_duration_seconds=round(total_seconds, 2),
+            total_duration_formatted=format_seconds_hms(total_seconds),
+            total_successful_videos_size_bytes=total_vid_size_successful,
+            total_successful_videos_size_formatted=format_bytes(total_vid_size_successful),
+            total_failed_videos_size_bytes=total_vid_size_failed,
+            total_failed_videos_size_formatted=format_bytes(total_vid_size_failed),
+            total_videos_size_bytes=total_vid_size_successful + total_vid_size_failed,
+            total_videos_size_formatted=format_bytes(total_vid_size_successful + total_vid_size_failed),
+            generated_at=timestamp.isoformat(),
+        ),
+        details=details_list,
+        failed_videos=failed_videos_formatted,
+    )
 
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(report_structure, f, indent=4)

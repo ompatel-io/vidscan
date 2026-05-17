@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 import argparse
 import concurrent.futures
@@ -13,19 +12,7 @@ from dataclasses import dataclass, field
 from typing import TypedDict, Callable
 from collections.abc import Iterator
 
-# ==================================================================================
-# CONSTANTS
-# ==================================================================================
-
-DEFAULT_VIDEO_EXTENSIONS = {'.mp4', '.mkv', '.webm', '.mov', '.m4v', '.avi', '.wmv', '.flv', '.mpg', '.mpeg'}
-
-DEFAULT_W = min(4, os.cpu_count() or 1)
-
-DEFAULT_W_SSD = min(32, os.cpu_count() or 1)
-
-MAX_W = 128
-
-FFPROBE_PATH = shutil.which('ffprobe') or ""
+from .constants import DEFAULT_VIDEO_EXTENSIONS, DEFAULT_W, DEFAULT_W_SSD, MAX_W, FFPROBE_PATH
 
 # ==================================================================================
 # UTILS

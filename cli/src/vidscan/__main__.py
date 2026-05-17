@@ -10,7 +10,7 @@ import csv
 import json
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, no_type_check, TypedDict
+from typing import TypedDict, Callable
 from collections.abc import Iterator
 
 # ==================================================================================
@@ -108,16 +108,16 @@ class UI:
     color_cyan: str
     color_reset: str
 
-    def error(self, text: Any) -> str:
+    def error(self, text: object) -> str:
         return f"{self.color_red}{text}{self.color_reset}"
 
-    def warning(self, text: Any) -> str:
+    def warning(self, text: object) -> str:
         return f"{self.color_yellow}{text}{self.color_reset}"
 
-    def success(self, text: Any) -> str:
+    def success(self, text: object) -> str:
         return f"{self.color_green}{text}{self.color_reset}"
 
-    def info(self, text: Any) -> str:
+    def info(self, text: object) -> str:
         return f"{self.color_cyan}{text}{self.color_reset}"
     
 def get_ui() -> UI:
@@ -458,9 +458,8 @@ def scan_videos_concurrently(
 # REPORTS
 # ==================================================================================
 
-@no_type_check
 def get_sorted_data(folders: list[FolderData], sort_by: str, reverse: bool) -> list[FolderData]:
-    sort_keys = {
+    sort_keys: dict[str, Callable[[FolderData], str | float | int]] = {
         'name':     lambda f: os.path.basename(f.path).lower(),
         'duration': lambda f: f.total_seconds,
         'videos':   lambda f: f.video_count,

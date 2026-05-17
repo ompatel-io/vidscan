@@ -3,5 +3,9 @@ dist/
 build/
 *.egg-info/
 
+__pycache__/
+*.py[codz]
+*$py.class
+
 VidScan_Benchmark_Data/
 cli_benchmark.csv

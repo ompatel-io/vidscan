@@ -31,6 +31,7 @@ class UI:
         return f"{self.color_cyan}{text}{self.color_reset}"
     
 def get_ui() -> UI:
+    # getattr fallback when stdout not have encoding attribute
     stdout_encoding = getattr(sys.stdout, 'encoding', '')
     is_utf8 = stdout_encoding and stdout_encoding.lower() in ['utf-8', 'utf8']
 
@@ -39,6 +40,7 @@ def get_ui() -> UI:
         bar_empty = '░'
         spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     else:
+        # Fallback for terminals that don't support utf-8
         bar_fill = '='
         bar_empty = '-'
         spinner = ['|', '/', '-', '\\']
@@ -47,8 +49,10 @@ def get_ui() -> UI:
 
     color = False
 
+    # Flags used by CI/CD tools
     if 'FORCE_COLOR' in os.environ or 'CLICOLOR_FORCE' in os.environ:
         color = True
+    # 'NO_COLOR' standard (https://no-color.org/)
     elif 'NO_COLOR' in os.environ:
         color = False
     elif is_terminal and enable_ansi_windows():

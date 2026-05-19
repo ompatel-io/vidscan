@@ -16,7 +16,7 @@ def stream_video_files(root_folder: str, video_extensions: set[str], excluded_fo
         try:
             with os.scandir(current_dir) as entries:
                 for entry in entries:
-                    if entry.is_dir(follow_symlinks=False):
+                    if entry.is_dir(follow_symlinks=False): # follow_symlinks=False to prevent infinite loops from circular symlinks
                         if entry.name not in excluded_folders:
                             stack.append(entry.path)
                     
@@ -32,7 +32,8 @@ def stream_video_files(root_folder: str, video_extensions: set[str], excluded_fo
                                     mtime=stat.st_mtime, 
                                     size=stat.st_size,
                                 )
-                                
+                            
+                            # Yield with error so it gets logged as failed instead of silently dropped
                             except OSError as e:
                                 yield DiscoveredFile(
                                     path=entry.path, 
@@ -43,10 +44,11 @@ def stream_video_files(root_folder: str, video_extensions: set[str], excluded_fo
                                     error=f"OS Error: {str(e)}"
                                 )
         except OSError:
-            continue
+            continue # Skip system or non permission folders dirs
 
 def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> tuple[float, str]:
     try:
+        # ffprobe command to extract the video duration as a number, without metadata and logs.
         command = [ # type: ignore
             FFPROBE_PATH, 
             "-v", "error", 
@@ -63,6 +65,7 @@ def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> tuple[flo
         }
 
         if os.name == 'nt':
+            # CREATE_NO_WINDOW flag prevents creating cmd GUI, reducing overhead (Windows only, error for other os)
             run_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
 
         result = subprocess.run(command, **run_kwargs) # type: ignore
@@ -92,6 +95,7 @@ def scan_videos_concurrently(
 
     start_time = time.time()
 
+    # First pass to find total videos needed for progress bar
     if not fast_start_mode:
         print(ui.warning("Scanning directory structure..."))
         total_videos = sum(1 for _ in stream_video_files(root_folder, video_extensions, excluded_folders))
@@ -107,7 +111,9 @@ def scan_videos_concurrently(
     failed_videos_data: list[FailedVideo] = []
 
     last_print_time = 0.0
-    progress_update_interval = 0.1
+
+    # Progress print update interval in sec
+    progress_update_interval = 0.1 # Every 0.1 sec -> 10 FPS
 
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=num_workers)
     future_to_video: dict[concurrent.futures.Future[tuple[float, str]], DiscoveredFile] = {}
@@ -157,6 +163,7 @@ def scan_videos_concurrently(
 
             if ui.is_terminal:
                 current_time = time.time()
+                # Skip prints for every tasks completed, only update the progress after update interval
                 if current_time - last_print_time >= progress_update_interval or videos_processed == total_videos:
                     if fast_start_mode:
                         print(f"\r[{next(ui.spinner)}] Videos processed: {ui.info(videos_processed)}", end="", flush=True)
@@ -177,6 +184,7 @@ def scan_videos_concurrently(
         print(ui.info("Cancelling and saving partial data..."))
 
     finally:
+        # cancel_futures cancels pending work on KeyboardInterrupt
         executor.shutdown(wait=False, cancel_futures=True)
 
     print(f"\nProcessing complete in {time.time() - start_time:.2f} seconds.")
@@ -197,6 +205,7 @@ def scan_videos_concurrently(
         folder_stats.video_count = len(folder_stats.videos)
         success_count += folder_stats.video_count
 
+    # In fast start mode, total videos is not known, set after scan complete
     if fast_start_mode:
         total_videos = videos_processed
 

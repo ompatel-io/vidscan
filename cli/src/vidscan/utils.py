@@ -27,12 +27,13 @@ def enable_ansi_windows() -> bool:
     try:
         import ctypes
         kernel32 = ctypes.windll.kernel32
-        handle = kernel32.GetStdHandle(-11)
+        handle = kernel32.GetStdHandle(-11) # -11 = STD_OUTPUT_HANDLE
         mode = ctypes.c_uint32()
 
         if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
             return False
         
+        # 0x0004 = ENABLE_VIRTUAL_TERMINAL_PROCESSING, enables ANSI escape
         if not kernel32.SetConsoleMode(handle, mode.value | 0x0004):
             return False 
         
@@ -46,17 +47,16 @@ def format_windows_max_path(path: str) -> str:
 
     path = os.path.abspath(path)
     
-    # Path is safe if < 260 (Windows MAX_PATH)
+    # Windows MAX_PATH limit is 260
     if len(path) < 260:
         return path
 
-    # Add extended length prefix for long path
+    # Extended length prefix "\\?\" bypasses MAX_PATH limit
     if not path.startswith('\\\\?\\'):
         if path.startswith('\\\\'):
-            # Network/UNC path
+            # UNC network paths use \\?\UNC\ instead
             path = f"\\\\?\\UNC\\{path[2:]}"
         else:
-            # Local/Mapped Path
             path = f"\\\\?\\{path}"
             
     return path

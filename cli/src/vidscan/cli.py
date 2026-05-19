@@ -115,6 +115,7 @@ def main():
             sys.exit(1)
 
         try:
+            # Validate ffprobe is executable, not just present on path
             subprocess.run(
                 [FFPROBE_PATH, "-version"], 
                 stdout=subprocess.DEVNULL, 
@@ -125,7 +126,7 @@ def main():
             print(ui.error(f"ERROR: ffprobe was found, but failed to execute. {e}"))
             sys.exit(1)
 
-        root_folder = format_windows_max_path(args.folder_path)
+        root_folder = format_windows_max_path(args.folder_path) # Handle long paths on Windows
 
         if not os.path.isdir(root_folder):
             print(ui.error(f"ERROR: The path '{root_folder}' is not a valid directory."))
@@ -161,7 +162,6 @@ def main():
                 print(ui.warning("\nNo video files found with the default extensions:"))
                 print(ui.info(', '.join(sorted(DEFAULT_VIDEO_EXTENSIONS))))
                 print(f"To include other formats, or scan for specific formats only, please provide them in {ui.info('--extensions')} flag.")
-                print(f"You can also change {ui.info('DEFAULT_VIDEO_EXTENSIONS')} at the top of the script permanently.")
             sys.exit(0)
 
         sorted_data: list[FolderData] = get_sorted_data(

@@ -176,7 +176,7 @@ def main():
 
         try:
             if report_format in ['csv', 'all']:
-                csv_output_filename = f"{folder_name}_video_duration.csv"
+                csv_output_filename = f"{folder_name}_vidscan_report.csv"
                 csv_output_path = os.path.join(root_folder, csv_output_filename)
 
                 write_csv_report(
@@ -195,7 +195,7 @@ def main():
                     print(ui.warning(f"\n[!] NOTE: Scanning failed for {failed_count} videos. Check the 'FAILED' rows in the CSV."))
 
             if report_format in ['json', 'all']:
-                json_output_filename = f"{folder_name}_video_duration.json"
+                json_output_filename = f"{folder_name}_vidscan_report.json"
                 json_output_path = os.path.join(root_folder, json_output_filename)
 
                 write_json_report(
@@ -213,10 +213,10 @@ def main():
                     print(ui.warning(f"\n[!] NOTE: Scanning failed for {failed_count} videos. Check the 'failed_files' array in the JSON."))
                 
             if report_format in ['txt', 'all']:
-                txt_output_filename = f"{folder_name} - Video Duration.txt"
+                txt_output_filename = f"{folder_name} - vidscan Report.txt"
                 txt_output_path = os.path.join(root_folder, txt_output_filename)
 
-                failed_videos_report_filename = f"{folder_name} - Failed Videos.txt"
+                failed_videos_report_filename = f"{folder_name} - vidscan Failed Files.txt"
                 failed_videos_report_path = os.path.join(root_folder, failed_videos_report_filename)
 
                 txt_report_template = 'detailed' if report_format == 'all' else args.template

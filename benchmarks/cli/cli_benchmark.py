@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import shutil
 import time
 import csv
 import json
@@ -11,7 +12,7 @@ import datetime
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURR_DIR, "..", ".."))
 
-DEFAULT_VIDSCAN_PATH = os.path.join(ROOT_DIR, "cli", "src", "vidscan", "__main__.py") 
+VIDSCAN_PATH = shutil.which("vidscan")
 DEFAULT_BENCHMARK_DATA_DIR = os.path.join(ROOT_DIR, "VidScan_Benchmark_Data")
 
 OUTPUT_CSV  = os.path.join(CURR_DIR, "cli_benchmark.csv")
@@ -45,15 +46,7 @@ def main():
         type=str,
         default=DEFAULT_BENCHMARK_DATA_DIR,
         help="Path to benchmark data folder")
-    parser.add_argument(
-        "--vidscan",
-        type=str,
-        default=DEFAULT_VIDSCAN_PATH,
-        help="Path to vidscan"
-    )
     args = parser.parse_args()
-
-    CLI_COMMAND = [sys.executable, args.vidscan]
 
     workers_shuffled = args.workers.copy()
     random.shuffle(workers_shuffled)
@@ -63,14 +56,13 @@ def main():
     print("=" * 60)
     print(f"CPU Logical Cores: {os.cpu_count()}")
 
-    if not os.path.exists(args.vidscan):
-        print(f"\nERROR: Could not find '{args.vidscan}'.")
-        print("Check the location for vidscan.py")
+    if not VIDSCAN_PATH:
+        print(f"\nERROR: vidscan not found in system PATH")
         sys.exit(1)
 
     if not os.path.exists(args.bench_dir):
         print(f"\nERROR: Benchmark folder '{args.bench_dir}' not found.")
-        print("Please generate benchmark folder using generate_benchmark.py first.")
+        print("Please generate benchmark folder using generate_benchmark_data.py first.")
         sys.exit(1)
 
     for i in range(1, len(workers_shuffled) + 1):
@@ -90,7 +82,7 @@ def main():
         bench_data_folder = os.path.join(args.bench_dir, f"Run_{i}")
         folder_name = os.path.basename(bench_data_folder)
         
-        cmd = CLI_COMMAND + ["-w", str(workers), "-f", "json", bench_data_folder]
+        cmd = [VIDSCAN_PATH, "-w", str(workers), "-f", "json", bench_data_folder]
         
         print(f"{i:<5} | Run_{i:<4} | -w {workers:<5} | ", end="", flush=True)
 

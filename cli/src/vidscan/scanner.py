@@ -70,7 +70,13 @@ def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> tuple[flo
 
         result = subprocess.run(command, **run_kwargs) # type: ignore
         
-        return float(result.stdout), "" # type: ignore
+        try:
+            duration = float(result.stdout.strip()) # type: ignore
+            if duration > 0:
+                return duration, ""
+            return 0.0, f"ffprobe returned invalid duration: {duration}"
+        except ValueError:
+            return 0.0, f"ffprobe returned: {result.stdout.strip()}" # type: ignore
         
     except subprocess.TimeoutExpired:
         return 0.0, f"Process timed out after {ffprobe_timeout_sec} seconds"

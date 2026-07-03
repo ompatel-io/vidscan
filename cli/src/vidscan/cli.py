@@ -7,9 +7,8 @@ import datetime
 from .constants import DEFAULT_VIDEO_EXTENSIONS, DEFAULT_W, DEFAULT_W_SSD, MAX_W, FFPROBE_PATH
 from .utils import format_windows_max_path
 from .ui import get_ui
-from .models import FolderData
 from .scanner import scan_videos_concurrently
-from .reports import get_sorted_data
+from .reports import sort_results
 from .reports.txt import write_txt_and_failed_videos_report
 from .reports.csv import write_csv_report
 from .reports.json import write_json_report
@@ -27,6 +26,17 @@ def parse_w_flag(value: str) -> int:
             return DEFAULT_W_SSD
         
         return DEFAULT_W
+
+def parse_sort_flag(value: str, sort_options: list[str], flag_name: str) -> tuple[str, str]:
+    split_values = value.split(':', 1)
+    sort_by = split_values[0].strip()
+    order = split_values[1].strip() if len(split_values) > 1 else 'asc'
+
+    if sort_by not in sort_options:
+        raise argparse.ArgumentTypeError(f"Invalid option '{sort_by}' for {flag_name} Choose from: {', '.join(sort_options)}")
+    if order not in ('asc', 'desc'):
+        raise argparse.ArgumentTypeError(f"Invalid order '{order}'. Choose asc or desc.")
+    return sort_by, order
 
 def main():
     try:
@@ -80,16 +90,24 @@ def main():
             help="Include video size in the txt reports."
         )
         parser.add_argument(
-            "-sb", "--sort-by",
-            choices=['name', 'duration', 'videos', 'size', 'date'],
-            default='name',
-            help="Sort folders by (default: name)."
+            '-sf', '--sort-folders',
+            type=lambda v: parse_sort_flag(v, ['name', 'duration', 'videos', 'size', 'date'], '--sort-folders'),
+            default=('name', 'asc'),
+            help=(
+                "Sort folders by: name, duration, videos, size, date\n"
+                "Optionally include sort order with colon: duration:desc\n"
+                "Sort order is asc if not provided (default: name:asc)"
+            )
         )
         parser.add_argument(
-            "-so", "--sort-order",
-            choices=['asc', 'desc'],
-            default='asc',
-            help="Sort order (default: asc)."
+            '-sv', '--sort-videos',
+            type=lambda v: parse_sort_flag(v, ['name', 'duration', 'size', 'date'], '--sort-videos'),
+            default=('name', 'asc'),
+            help=(
+                "Sort folders by: name, duration, size, date\n"
+                "Optionally include sort order with colon: duration:desc\n"
+                "Sort order is asc if not provided (default: name:asc)"
+            )
         )
         parser.add_argument(
             "--fast-start",
@@ -164,10 +182,15 @@ def main():
                 print(f"To include other formats, or scan for specific formats only, please provide them in {ui.info('--extensions')} flag.")
             sys.exit(0)
 
-        sorted_data: list[FolderData] = get_sorted_data(
-            folders=scan_result.folders,
-            sort_by=args.sort_by,
-            reverse=(args.sort_order == 'desc')
+        sort_folders_by, sort_order_folders = args.sort_folders
+        sort_videos_by, sort_order_videos = args.sort_videos
+
+        sort_results(
+            scan_result.folders,
+            sort_folders_by,
+            sort_order_folders == 'desc',
+            sort_videos_by,
+            sort_order_videos == 'desc'
         )
         
         folder_name = os.path.basename(os.path.normpath(root_folder))
@@ -179,8 +202,9 @@ def main():
                 csv_output_filename = f"{folder_name}_vidscan_report.csv"
                 csv_output_path = os.path.join(root_folder, csv_output_filename)
 
+                # TODO: scan_result as whole for all reports
                 write_csv_report(
-                    sorted_data,
+                    scan_result.folders,
                     csv_output_path,
                     root_folder,
                     scan_result.total_videos,
@@ -199,7 +223,7 @@ def main():
                 json_output_path = os.path.join(root_folder, json_output_filename)
 
                 write_json_report(
-                    sorted_data,
+                    scan_result.folders,
                     json_output_path,
                     scan_result.total_videos,
                     scan_result.success_count,
@@ -222,7 +246,7 @@ def main():
                 txt_report_template = 'detailed' if report_format == 'all' else args.template
 
                 report_content, failed_videos_report_content = write_txt_and_failed_videos_report(
-                    sorted_data,
+                    scan_result.folders,
                     txt_output_path,
                     txt_report_template,
                     scan_result.failed_videos_data,

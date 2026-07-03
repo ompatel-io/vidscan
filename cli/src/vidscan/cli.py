@@ -25,7 +25,7 @@ def parse_w_flag(value: str) -> int:
         if value.strip().lower() == 'ssd':
             return DEFAULT_W_SSD
         
-        return DEFAULT_W
+        raise argparse.ArgumentTypeError(f"--workers must be a number or 'ssd'.")
 
 def parse_sort_flag(value: str, sort_options: list[str], flag_name: str) -> tuple[str, str]:
     split_values = value.split(':', 1)
@@ -70,7 +70,6 @@ def main():
                 f"Number of parallel threads to use (default: {DEFAULT_W} for your system)\n"
                 f"-w ssd : Uses an optimal {DEFAULT_W_SSD} for your system, provide it if you have an SSD\n"
                 "-w <n> : Manually provide threads (e.g. -w 6)\n"
-                "Anything else will fall back to default"
             )
         )
         parser.add_argument(

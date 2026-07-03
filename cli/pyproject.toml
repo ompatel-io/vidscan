@@ -16,7 +16,7 @@ Homepage = "https://github.com/ompatel100/vidscan"
 "Bug Tracker" = "https://github.com/ompatel100/vidscan/issues"
 
 [project.scripts]
-vidscan = "vidscan.__main__:main"
+vidscan = "vidscan.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,5 +1,4 @@
 import os
-import datetime
 
 from ..models import FailedVideo, ScanResult
 from ..utils import format_bytes, format_seconds_hms
@@ -136,38 +135,11 @@ def get_failed_videos_report_lines(failed_videos_data: list[FailedVideo]) -> lis
     
     return lines
 
-def write_txt_and_failed_videos_report(
-    scan_result: ScanResult, 
-    output_path: str, 
-    template: str,  
-    failed_videos_report_path: str, 
-    timestamp: datetime.datetime, 
-    include_size: bool
-) -> tuple[str, str]:
-    
-    failed_count = len(scan_result.failed_videos_data)
-
-    timestamp_str = f"Generated on: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
-    
-    if template == 'detailed':
-        report_lines = get_txt_report_detailed_lines(scan_result, include_size)
-    else:
-        report_lines = get_txt_report_summary_lines(scan_result, include_size)
-
-    report_lines.append(timestamp_str)
-    report_content = "\n".join(report_lines)
+def write_txt_report(lines: list[str], output_path: str, timestamp_str: str) -> str:
+    lines.append(timestamp_str)
+    report_content = "\n".join(lines)
 
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(report_content)
 
-    failed_videos_report_content = ""
-
-    if failed_count > 0:
-        failed_videos_report_lines = get_failed_videos_report_lines(scan_result.failed_videos_data)
-        failed_videos_report_lines.append(timestamp_str)
-        failed_videos_report_content = "\n".join(failed_videos_report_lines)
-        
-        with open(failed_videos_report_path, 'w', encoding='utf-8') as f:
-            f.write(failed_videos_report_content)
-
-    return report_content, failed_videos_report_content
+    return report_content

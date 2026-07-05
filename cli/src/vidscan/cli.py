@@ -9,7 +9,7 @@ from .utils import format_windows_max_path
 from .ui import get_ui
 from .scanner import scan_videos_concurrently
 from .reports import sort_results
-from .reports.txt import write_txt_and_failed_videos_report
+from .reports.txt import write_txt_report, get_txt_report_summary_lines, get_txt_report_detailed_lines, get_failed_videos_report_lines
 from .reports.csv import write_csv_report
 from .reports.json import write_json_report
 
@@ -74,14 +74,9 @@ def main():
         )
         parser.add_argument(
             "-f", "--format",
-            choices=['txt', 'csv', 'json', 'all'],
-            default='txt',
-            help="Output file format (default: txt).")
-        parser.add_argument(
-            "-t", "--template", 
-            choices=['summary', 'detailed'], 
-            default='summary',
-            help="Text report template (default: summary)."
+            choices=['txt-summary', 'txt-detailed', 'csv', 'json', 'all'],
+            default='txt-summary',
+            help="Output report format (default: txt-summary)."
         )
         parser.add_argument(
             "--include-size-txt",
@@ -195,9 +190,15 @@ def main():
         folder_name = os.path.basename(os.path.normpath(root_folder))
         timestamp = datetime.datetime.now()
         report_format = args.format
+        
+        is_txt_summary = report_format == 'txt-summary'
+        is_txt_detailed = report_format == 'txt-detailed'
+        is_csv = report_format == 'csv'
+        is_json = report_format == 'json'
+        is_all = report_format == 'all'
 
         try:
-            if report_format in ['csv', 'all']:
+            if is_csv or is_all:
                 csv_output_filename = f"{folder_name}_vidscan_report.csv"
                 csv_output_path = os.path.join(root_folder, csv_output_filename)
 
@@ -210,10 +211,10 @@ def main():
                 print(ui.success("\nSuccess! CSV file saved to:"))
                 print(ui.info(csv_output_path))
                 
-                if failed_count > 0 and report_format != 'all':
+                if failed_count > 0 and not is_all:
                     print(ui.warning(f"\n[!] NOTE: Scanning failed for {failed_count} videos. Check the 'FAILED' rows in the CSV."))
 
-            if report_format in ['json', 'all']:
+            if is_json or is_all:
                 json_output_filename = f"{folder_name}_vidscan_report.json"
                 json_output_path = os.path.join(root_folder, json_output_filename)
 
@@ -225,40 +226,59 @@ def main():
                 print(ui.success(f"\nSuccess! JSON file saved to:"))
                 print(ui.info(json_output_path))
                 
-                if failed_count > 0 and report_format != 'all':
+                if failed_count > 0 and not is_all:
                     print(ui.warning(f"\n[!] NOTE: Scanning failed for {failed_count} videos. Check the 'failed_files' array in the JSON."))
                 
-            if report_format in ['txt', 'all']:
-                txt_output_filename = f"{folder_name} - vidscan Report.txt"
-                txt_output_path = os.path.join(root_folder, txt_output_filename)
-
+            if is_txt_summary or is_txt_detailed or is_all:
+                txt_summary_output_filename = f"{folder_name} - vidscan Summary Report.txt"
+                txt_detailed_output_filename = f"{folder_name} - vidscan Detailed Report.txt"
                 failed_videos_report_filename = f"{folder_name} - vidscan Failed Files.txt"
+                
+                txt_summary_output_path = os.path.join(root_folder, txt_summary_output_filename)
+                txt_detailed_output_path = os.path.join(root_folder, txt_detailed_output_filename)
                 failed_videos_report_path = os.path.join(root_folder, failed_videos_report_filename)
 
-                txt_report_template = 'detailed' if report_format == 'all' else args.template
+                timestamp_str = f"Generated on: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 
-                report_content, failed_videos_report_content = write_txt_and_failed_videos_report(
-                    scan_result,
-                    txt_output_path,
-                    txt_report_template,
-                    failed_videos_report_path,
-                    timestamp,
-                    args.include_size_txt
-                )
+                if is_txt_summary or is_all:
+                    report_content = write_txt_report(
+                        get_txt_report_summary_lines(scan_result, args.include_size_txt),
+                        txt_summary_output_path,
+                        timestamp_str
+                    )
 
-                print(ui.warning("\n--- File Preview ---"))
-                print(report_content)
-                print(ui.success("\nSuccess! Text file saved to:"))
-                print(ui.info(txt_output_path))
+                    print(ui.warning("\n--- Txt Summary File Preview ---"))
+                    print(report_content)
+                    print(ui.success("\n\nSuccess! Text file saved to:"))
+                    print(ui.info(txt_summary_output_path))
+
+                if is_txt_detailed or is_all:
+                    report_content = write_txt_report(
+                        get_txt_report_detailed_lines(scan_result, args.include_size_txt),
+                        txt_detailed_output_path,
+                        timestamp_str
+                    )
+
+                    print(ui.warning("\n--- Txt Detailed File Preview ---"))
+                    print(report_content)
+                    print(ui.success("\n\nSuccess! Text file saved to:"))
+                    print(ui.info(txt_detailed_output_path))
 
                 if failed_count > 0:
-                    print(ui.warning(f"\n[!] NOTE: Scanning failed for {failed_count} videos."))
+                    failed_report_content = write_txt_report(
+                        get_failed_videos_report_lines(scan_result.failed_videos_data),
+                        failed_videos_report_path,
+                        timestamp_str
+                    )
+
                     print(ui.warning("\n--- Failed Videos File Preview ---"))
-                    print(failed_videos_report_content)
+                    print(failed_report_content)
+
+                    print(ui.warning(f"\n\n[!] NOTE: Scanning failed for {failed_count} videos."))
                     print(ui.warning("\nFailed videos file has been saved to:"))
                     print(ui.info(failed_videos_report_path))
 
-                    if report_format == 'all':
+                    if is_all:
                         print(ui.warning("\nFailed videos and error messages can be found here in csv, json:"))
                         print(ui.warning("-'FAILED' rows in CSV."))
                         print(ui.warning("-'failed_videos' array in JSON."))

@@ -2,24 +2,16 @@ import os
 import csv
 import datetime
 
-from ..models import FolderData, FailedVideo
+from ..models import ScanResult
 from ..utils import format_bytes, format_seconds_hms
 
-def write_csv_report(
-    sorted_data: list[FolderData], 
-    output_path: str, 
-    root_folder: str, 
-    total_videos: int, 
-    success_count: int, 
-    failed_videos_data: list[FailedVideo], 
-    timestamp: datetime.datetime
-):
+def write_csv_report(scan_result: ScanResult, output_path: str, root_folder: str, timestamp: datetime.datetime):
     with open(output_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['Folder Path', 'Relative Path', 'File Name', 'Duration (Seconds)', 'Duration (Formatted)', 'Size (Bytes)', 'Size (Formatted)'])
         
         total_vid_size_successful = 0
-        for folder in sorted_data:
+        for folder in scan_result.folders:
             try:
                 relative_path = os.path.relpath(folder.path, root_folder)
             except ValueError:
@@ -41,8 +33,8 @@ def write_csv_report(
             total_vid_size_successful += folder.total_size
 
         total_vid_size_failed = 0
-        if failed_videos_data:
-            for failed_video in sorted(failed_videos_data, key=lambda x: x.path):
+        if scan_result.failed_videos_data:
+            for failed_video in sorted(scan_result.failed_videos_data, key=lambda x: x.path):
                 folder_path = os.path.dirname(failed_video.path)
                 try:
                     relative_path = os.path.relpath(folder_path, root_folder)
@@ -64,9 +56,9 @@ def write_csv_report(
 
         writer.writerow([])
         writer.writerow(['--- SCAN SUMMARY ---', '', '', '', '', '', ''])
-        writer.writerow(['Total Videos Discovered', total_videos, '', '', '', '', ''])
-        writer.writerow(['Successful', success_count, '', '', '', '', ''])
-        writer.writerow(['Failed', len(failed_videos_data), '', '', '', '', ''])
+        writer.writerow(['Total Videos Discovered', scan_result.total_videos, '', '', '', '', ''])
+        writer.writerow(['Successful', scan_result.success_count, '', '', '', '', ''])
+        writer.writerow(['Failed', len(scan_result.failed_videos_data), '', '', '', '', ''])
         writer.writerow(['Total Size (Successful Videos)', total_vid_size_successful, format_bytes(total_vid_size_successful), '', '', '', ''])
         writer.writerow(['Total Size (Failed Videos)', total_vid_size_failed, format_bytes(total_vid_size_failed), '', '', '', ''])
         writer.writerow(['Total Size (All Videos)', total_vid_size_successful + total_vid_size_failed, format_bytes(total_vid_size_successful + total_vid_size_failed), '', '', '', ''])

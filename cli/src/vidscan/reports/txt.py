@@ -1,10 +1,10 @@
 import os
 import datetime
 
-from ..models import FolderData, FailedVideo
+from ..models import FailedVideo, ScanResult
 from ..utils import format_bytes, format_seconds_hms
 
-def get_txt_report_summary_lines(sorted_data: list[FolderData], failed_count: int, include_size: bool) -> list[str]:
+def get_txt_report_summary_lines(scan_result: ScanResult, include_size: bool) -> list[str]:
     divide_line_length = 60 if include_size else 45
 
     lines = [
@@ -17,7 +17,7 @@ def get_txt_report_summary_lines(sorted_data: list[FolderData], failed_count: in
     grand_total_vid_size = 0
     grand_total_videos = 0
 
-    for folder in sorted_data:
+    for folder in scan_result.folders:
         folder_name = os.path.basename(folder.path) or os.path.basename(os.path.normpath(folder.path))
 
         lines.append(f"Folder: {folder_name}")
@@ -32,7 +32,7 @@ def get_txt_report_summary_lines(sorted_data: list[FolderData], failed_count: in
     
     totals_lines = [
         "\nTOTALS",
-        f"  -> Total Folders: {len(sorted_data)}",
+        f"  -> Total Folders: {len(scan_result.folders)}",
         f"  -> Total Videos: {grand_total_videos}",
         f"  -> Total Duration: {format_seconds_hms(grand_total_seconds)}"
     ]
@@ -43,16 +43,16 @@ def get_txt_report_summary_lines(sorted_data: list[FolderData], failed_count: in
     totals_lines.append("=" * divide_line_length)
     lines.extend(totals_lines)
 
-    if failed_count > 0:
+    if scan_result.failed_videos_data:
         lines.extend([
             "",
             "---",
-            f"[!] NOTE: Scanning failed for {failed_count} videos and are excluded from this report."
+            f"[!] NOTE: Scanning failed for {len(scan_result.failed_videos_data)} videos and are excluded from this report."
         ])
 
     return lines
 
-def get_txt_report_detailed_lines(sorted_data: list[FolderData], failed_count: int, include_size: bool) -> list[str]:
+def get_txt_report_detailed_lines(scan_result: ScanResult, include_size: bool) -> list[str]:
     divide_line_length = 75 if include_size else 60
 
     lines = [
@@ -65,7 +65,7 @@ def get_txt_report_detailed_lines(sorted_data: list[FolderData], failed_count: i
     grand_total_vid_size = 0
     grand_total_videos = 0
 
-    for folder in sorted_data:
+    for folder in scan_result.folders:
         folder_name = os.path.basename(folder.path) or os.path.basename(os.path.normpath(folder.path))
 
         lines.append(f"Folder: {folder_name}")
@@ -86,7 +86,7 @@ def get_txt_report_detailed_lines(sorted_data: list[FolderData], failed_count: i
     
     totals_lines = [
         "\nGRAND TOTAL",
-        f"  -> Total Folders: {len(sorted_data)}",
+        f"  -> Total Folders: {len(scan_result.folders)}",
         f"  -> Total Videos: {grand_total_videos}",
         f"  -> Total Duration: {format_seconds_hms(grand_total_seconds)}"
     ]
@@ -97,11 +97,11 @@ def get_txt_report_detailed_lines(sorted_data: list[FolderData], failed_count: i
     totals_lines.append("=" * divide_line_length)
     lines.extend(totals_lines)
 
-    if failed_count > 0:
+    if scan_result.failed_videos_data:
         lines.extend([
             "",
             "---",
-            f"[!] Note: Scanning failed for {failed_count} videos and are excluded from this report."
+            f"[!] Note: Scanning failed for {len(scan_result.failed_videos_data)} videos and are excluded from this report."
         ])
 
     return lines
@@ -137,23 +137,22 @@ def get_failed_videos_report_lines(failed_videos_data: list[FailedVideo]) -> lis
     return lines
 
 def write_txt_and_failed_videos_report(
-    sorted_data: list[FolderData], 
+    scan_result: ScanResult, 
     output_path: str, 
-    template: str, 
-    failed_videos_data: list[FailedVideo], 
+    template: str,  
     failed_videos_report_path: str, 
     timestamp: datetime.datetime, 
     include_size: bool
 ) -> tuple[str, str]:
     
-    failed_count = len(failed_videos_data)
+    failed_count = len(scan_result.failed_videos_data)
 
     timestamp_str = f"Generated on: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
     
     if template == 'detailed':
-        report_lines = get_txt_report_detailed_lines(sorted_data, failed_count, include_size)
+        report_lines = get_txt_report_detailed_lines(scan_result, include_size)
     else:
-        report_lines = get_txt_report_summary_lines(sorted_data, failed_count, include_size)
+        report_lines = get_txt_report_summary_lines(scan_result, include_size)
 
     report_lines.append(timestamp_str)
     report_content = "\n".join(report_lines)
@@ -164,7 +163,7 @@ def write_txt_and_failed_videos_report(
     failed_videos_report_content = ""
 
     if failed_count > 0:
-        failed_videos_report_lines = get_failed_videos_report_lines(failed_videos_data)
+        failed_videos_report_lines = get_failed_videos_report_lines(scan_result.failed_videos_data)
         failed_videos_report_lines.append(timestamp_str)
         failed_videos_report_content = "\n".join(failed_videos_report_lines)
         

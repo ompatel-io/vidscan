@@ -2,7 +2,7 @@ import json
 import datetime
 from typing import TypedDict
 
-from ..models import FolderData, FailedVideo
+from ..models import ScanResult
 from ..utils import format_bytes, format_seconds_hms
 
 class VideoJSON(TypedDict):
@@ -50,19 +50,12 @@ class ReportJSON(TypedDict):
     details: list[FolderJSON]
     failed_videos: list[FailedVideoJSON]
 
-def write_json_report(
-    sorted_data: list[FolderData], 
-    output_path: str, 
-    total_videos: int, 
-    success_count: int, 
-    failed_videos_data: list[FailedVideo], 
-    timestamp: datetime.datetime
-):
+def write_json_report(scan_result:ScanResult, output_path: str, timestamp: datetime.datetime):
     total_vid_size_successful = 0
     total_seconds = 0.0
     details_list: list[FolderJSON] = []
     
-    for folder in sorted_data:
+    for folder in scan_result.folders:
         videos_formatted: list[VideoJSON] = []
         for video_data in sorted(folder.videos, key=lambda x: x.name):
             videos_formatted.append(VideoJSON(
@@ -92,7 +85,7 @@ def write_json_report(
     total_vid_size_failed = 0
     failed_videos_formatted: list[FailedVideoJSON] = []
     
-    for failed_video in sorted(failed_videos_data, key=lambda x: x.path):
+    for failed_video in sorted(scan_result.failed_videos_data, key=lambda x: x.path):
         failed_videos_formatted.append(FailedVideoJSON(
             path=failed_video.path,
             size=failed_video.size,
@@ -103,10 +96,10 @@ def write_json_report(
 
     report_structure = ReportJSON(
         summary=ReportSummaryJSON(
-            total_folders=len(sorted_data),
-            total_videos_discovered=total_videos,
-            successful_videos=success_count,
-            failed_videos_count=len(failed_videos_data),
+            total_folders=len(scan_result.folders),
+            total_videos_discovered=scan_result.total_videos,
+            successful_videos=scan_result.success_count,
+            failed_videos_count=len(scan_result.failed_videos_data),
             total_duration_seconds=round(total_seconds, 2),
             total_duration_formatted=format_seconds_hms(total_seconds),
             total_successful_videos_size_bytes=total_vid_size_successful,

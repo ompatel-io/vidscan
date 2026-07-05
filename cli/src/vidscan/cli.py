@@ -201,14 +201,10 @@ def main():
                 csv_output_filename = f"{folder_name}_vidscan_report.csv"
                 csv_output_path = os.path.join(root_folder, csv_output_filename)
 
-                # TODO: scan_result as whole for all reports
                 write_csv_report(
-                    scan_result.folders,
+                    scan_result,
                     csv_output_path,
                     root_folder,
-                    scan_result.total_videos,
-                    scan_result.success_count,
-                    scan_result.failed_videos_data,
                     timestamp
                 )
                 print(ui.success("\nSuccess! CSV file saved to:"))
@@ -222,11 +218,8 @@ def main():
                 json_output_path = os.path.join(root_folder, json_output_filename)
 
                 write_json_report(
-                    scan_result.folders,
+                    scan_result,
                     json_output_path,
-                    scan_result.total_videos,
-                    scan_result.success_count,
-                    scan_result.failed_videos_data,
                     timestamp
                 )
                 print(ui.success(f"\nSuccess! JSON file saved to:"))
@@ -245,10 +238,9 @@ def main():
                 txt_report_template = 'detailed' if report_format == 'all' else args.template
 
                 report_content, failed_videos_report_content = write_txt_and_failed_videos_report(
-                    scan_result.folders,
+                    scan_result,
                     txt_output_path,
                     txt_report_template,
-                    scan_result.failed_videos_data,
                     failed_videos_report_path,
                     timestamp,
                     args.include_size_txt

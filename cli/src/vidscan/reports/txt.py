@@ -3,8 +3,8 @@ import os
 from ..models import FailedVideo, ScanResult
 from ..utils import format_bytes, format_seconds_hms
 
-def get_txt_report_summary_lines(scan_result: ScanResult, include_size: bool) -> list[str]:
-    divide_line_length = 60 if include_size else 45
+def get_txt_report_summary_lines(scan_result: ScanResult) -> list[str]:
+    divide_line_length = 45
 
     lines = [
         "Video Duration (Summary)", 
@@ -21,8 +21,7 @@ def get_txt_report_summary_lines(scan_result: ScanResult, include_size: bool) ->
 
         lines.append(f"Folder: {folder_name}")
 
-        size_str = f" | Size: {format_bytes(folder.total_size)}" if include_size else ""
-        lines.append(f"  -> Videos: {folder.video_count:>3} | Duration: {format_seconds_hms(folder.total_seconds)}{size_str}")
+        lines.append(f"  -> Videos: {folder.video_count:>3} | Duration: {format_seconds_hms(folder.total_seconds)}")
         lines.append("-" * divide_line_length)
         
         grand_total_seconds += folder.total_seconds
@@ -33,11 +32,9 @@ def get_txt_report_summary_lines(scan_result: ScanResult, include_size: bool) ->
         "\nTOTALS",
         f"  -> Total Folders: {len(scan_result.folders)}",
         f"  -> Total Videos: {grand_total_videos}",
-        f"  -> Total Duration: {format_seconds_hms(grand_total_seconds)}"
+        f"  -> Total Duration: {format_seconds_hms(grand_total_seconds)}",
+        f"  -> Total Videos Size: {format_bytes(grand_total_vid_size)}"
     ]
-    
-    if include_size:
-        totals_lines.append(f"  -> Total Videos Size: {format_bytes(grand_total_vid_size)}")
         
     totals_lines.append("=" * divide_line_length)
     lines.extend(totals_lines)
@@ -51,8 +48,8 @@ def get_txt_report_summary_lines(scan_result: ScanResult, include_size: bool) ->
 
     return lines
 
-def get_txt_report_detailed_lines(scan_result: ScanResult, include_size: bool) -> list[str]:
-    divide_line_length = 75 if include_size else 60
+def get_txt_report_detailed_lines(scan_result: ScanResult) -> list[str]:
+    divide_line_length = 75
 
     lines = [
         "Video Duration (Detailed)", 
@@ -65,16 +62,14 @@ def get_txt_report_detailed_lines(scan_result: ScanResult, include_size: bool) -
     grand_total_videos = 0
 
     for folder in scan_result.folders:
-        folder_name = os.path.basename(folder.path) or os.path.basename(os.path.normpath(folder.path))
-
-        lines.append(f"Folder: {folder_name}")
+        lines.append(folder.path)
         
-        sub_total_size_str = f" | Subtotal Size: {format_bytes(folder.total_size)}" if include_size else ""
+        sub_total_size_str = f" | Subtotal Size: {format_bytes(folder.total_size)}"
         lines.append(f"  [ Videos: {folder.video_count:>3} | Subtotal Duration: {format_seconds_hms(folder.total_seconds)}{sub_total_size_str} ]")
         
         sorted_videos = sorted(folder.videos, key=lambda x: x.name)
         for vid_info in sorted_videos:
-            size_str = f" | {format_bytes(vid_info.size)}" if include_size else ""
+            size_str = f" | {format_bytes(vid_info.size)}"
             lines.append(f"    - {vid_info.name} ({format_seconds_hms(vid_info.duration)}{size_str})")
             
         lines.append("-" * divide_line_length)
@@ -87,11 +82,9 @@ def get_txt_report_detailed_lines(scan_result: ScanResult, include_size: bool) -
         "\nGRAND TOTAL",
         f"  -> Total Folders: {len(scan_result.folders)}",
         f"  -> Total Videos: {grand_total_videos}",
-        f"  -> Total Duration: {format_seconds_hms(grand_total_seconds)}"
+        f"  -> Total Duration: {format_seconds_hms(grand_total_seconds)}",
+        f"  -> Total Videos Size: {format_bytes(grand_total_vid_size)}"
     ]
-    
-    if include_size:
-        totals_lines.append(f"  -> Total Videos Size: {format_bytes(grand_total_vid_size)}")
     
     totals_lines.append("=" * divide_line_length)
     lines.extend(totals_lines)

@@ -79,11 +79,6 @@ def main():
             help="Output report format (default: txt-summary)."
         )
         parser.add_argument(
-            "--include-size-txt",
-            action="store_true",
-            help="Include video size in the txt reports."
-        )
-        parser.add_argument(
             '-sf', '--sort-folders',
             type=lambda v: parse_sort_flag(v, ['name', 'duration', 'videos', 'size', 'date'], '--sort-folders'),
             default=('name', 'asc'),
@@ -242,7 +237,7 @@ def main():
 
                 if is_txt_summary or is_all:
                     report_content = write_txt_report(
-                        get_txt_report_summary_lines(scan_result, args.include_size_txt),
+                        get_txt_report_summary_lines(scan_result),
                         txt_summary_output_path,
                         timestamp_str
                     )
@@ -254,7 +249,7 @@ def main():
 
                 if is_txt_detailed or is_all:
                     report_content = write_txt_report(
-                        get_txt_report_detailed_lines(scan_result, args.include_size_txt),
+                        get_txt_report_detailed_lines(scan_result),
                         txt_detailed_output_path,
                         timestamp_str
                     )

@@ -75,8 +75,8 @@ def main():
         parser.add_argument(
             "-f", "--format",
             choices=['txt-summary', 'txt-detailed', 'csv', 'json', 'all'],
-            default='txt-summary',
-            help="Output report format (default: txt-summary)."
+            default='txt-detailed',
+            help="Output report format (default: txt-detailed)."
         )
         parser.add_argument(
             '-sf', '--sort-folders',

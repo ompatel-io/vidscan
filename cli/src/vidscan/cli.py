@@ -73,10 +73,10 @@ def main():
             )
         )
         parser.add_argument(
-            "-f", "--format",
+            "-r", "--report",
             choices=['txt-summary', 'txt-detailed', 'csv', 'json', 'all'],
             default='txt-detailed',
-            help="Output report format (default: txt-detailed)"
+            help="Output report type (default: txt-detailed)"
         )
         parser.add_argument(
             "-o", "--output-dir",
@@ -218,13 +218,13 @@ def main():
         
         folder_name = os.path.basename(os.path.normpath(scan_folder_path))
         timestamp = datetime.datetime.now()
-        report_format = args.format
+        report_type = args.report
         
-        is_txt_summary = report_format == 'txt-summary'
-        is_txt_detailed = report_format == 'txt-detailed'
-        is_csv = report_format == 'csv'
-        is_json = report_format == 'json'
-        is_all = report_format == 'all'
+        is_txt_summary = report_type == 'txt-summary'
+        is_txt_detailed = report_type == 'txt-detailed'
+        is_csv = report_type == 'csv'
+        is_json = report_type == 'json'
+        is_all = report_type == 'all'
 
         try:
             if is_csv or is_all:

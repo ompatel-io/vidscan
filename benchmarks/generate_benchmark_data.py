@@ -183,7 +183,7 @@ def main():
     parser.add_argument(
         '-d', '--dest',
         type=str,
-        default="VidScan_Benchmark_Data",
+        default="vidscan_benchmark_data",
         help="Destination folder name"
     )
     args = parser.parse_args()

@@ -7,5 +7,5 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-VidScan_Benchmark_Data/
+vidscan_benchmark_data/
 cli_benchmark.csv

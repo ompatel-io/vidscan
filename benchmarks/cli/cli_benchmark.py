@@ -13,7 +13,7 @@ CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURR_DIR, "..", ".."))
 
 VIDSCAN_PATH = shutil.which("vidscan")
-DEFAULT_BENCHMARK_DATA_DIR = os.path.join(ROOT_DIR, "VidScan_Benchmark_Data")
+DEFAULT_BENCHMARK_DATA_DIR = os.path.join(ROOT_DIR, "vidscan_benchmark_data")
 
 OUTPUT_CSV  = os.path.join(CURR_DIR, "cli_benchmark.csv")
 

@@ -79,6 +79,14 @@ def main():
             help="Output report format (default: txt-detailed)"
         )
         parser.add_argument(
+            "-o", "--output-dir",
+            default=None,
+            help=(
+                "Path of folder to save reports to.\n"
+                "Defaults to scanned folder if not provided."
+            )
+        )
+        parser.add_argument(
             "-sf", "--sort-folders",
             type=lambda v: parse_sort_flag(v, ['name', 'duration', 'videos', 'size', 'date'], '--sort-folders'),
             default=('name', 'asc'),
@@ -133,11 +141,37 @@ def main():
             print(ui.error(f"ERROR: ffprobe was found, but failed to execute. {e}"))
             sys.exit(1)
 
-        root_folder = format_windows_max_path(args.folder_path) # Handle long paths on Windows
+        scan_folder_path = format_windows_max_path(args.folder_path) # Handle long paths on Windows
 
-        if not os.path.isdir(root_folder):
-            print(ui.error(f"ERROR: The path '{root_folder}' is not a valid directory."))
+        if not os.path.isdir(scan_folder_path):
+            print(ui.error(f"ERROR: Path provided for scanning is not a directory: '{scan_folder_path}'"))
             sys.exit(1)
+        
+        if args.output_dir:
+            output_dir = format_windows_max_path(args.output_dir)
+            
+            if not os.path.exists(output_dir):
+                print(ui.error(f"ERROR: Provided output directory does not exist: '{output_dir}'"))
+                sys.exit(1)
+            
+            if not os.path.isdir(output_dir):
+                print(ui.error(f"ERROR: Provided output path is not a directory: '{output_dir}'"))
+                sys.exit(1)
+            
+            test_file = os.path.join(output_dir, '.vidscan_write_test')
+
+            try:
+                with open(test_file, 'w') as f:
+                    f.write('')
+                os.remove(test_file)
+            except PermissionError:
+                print(ui.error(f"ERROR: No write permission for provided output directory: '{output_dir}'"))
+                sys.exit(1)
+            except OSError as e:
+                print(ui.error(f"ERROR: Cannot write to provided output directory: '{output_dir}'. Reason: {e}"))
+                sys.exit(1)
+        else:
+            output_dir = scan_folder_path
 
         excluded_folders = set(args.exclude)
 
@@ -146,12 +180,12 @@ def main():
         else:
             video_extensions = DEFAULT_VIDEO_EXTENSIONS
 
-        print(f"Scanning folder: {ui.info(root_folder)}")
+        print(f"Scanning folder: {ui.info(scan_folder_path)}")
         if excluded_folders:
             print(f"Excluding folders: {ui.info(', '.join(excluded_folders))}")
 
         scan_result = scan_videos_concurrently(
-            root_folder,
+            scan_folder_path,
             video_extensions,
             excluded_folders,
             args.workers,
@@ -182,7 +216,7 @@ def main():
             sort_order_videos == 'desc'
         )
         
-        folder_name = os.path.basename(os.path.normpath(root_folder))
+        folder_name = os.path.basename(os.path.normpath(scan_folder_path))
         timestamp = datetime.datetime.now()
         report_format = args.format
         
@@ -195,12 +229,12 @@ def main():
         try:
             if is_csv or is_all:
                 csv_output_filename = f"{folder_name}_vidscan_report.csv"
-                csv_output_path = os.path.join(root_folder, csv_output_filename)
+                csv_output_path = os.path.join(output_dir, csv_output_filename)
 
                 write_csv_report(
                     scan_result,
                     csv_output_path,
-                    root_folder,
+                    scan_folder_path,
                     timestamp
                 )
                 print(ui.success("\nSuccess! CSV file saved to:"))
@@ -211,7 +245,7 @@ def main():
 
             if is_json or is_all:
                 json_output_filename = f"{folder_name}_vidscan_report.json"
-                json_output_path = os.path.join(root_folder, json_output_filename)
+                json_output_path = os.path.join(output_dir, json_output_filename)
 
                 write_json_report(
                     scan_result,
@@ -229,9 +263,9 @@ def main():
                 txt_detailed_output_filename = f"{folder_name} - vidscan Detailed Report.txt"
                 failed_videos_report_filename = f"{folder_name} - vidscan Failed Files.txt"
                 
-                txt_summary_output_path = os.path.join(root_folder, txt_summary_output_filename)
-                txt_detailed_output_path = os.path.join(root_folder, txt_detailed_output_filename)
-                failed_videos_report_path = os.path.join(root_folder, failed_videos_report_filename)
+                txt_summary_output_path = os.path.join(output_dir, txt_summary_output_filename)
+                txt_detailed_output_path = os.path.join(output_dir, txt_detailed_output_filename)
+                failed_videos_report_path = os.path.join(output_dir, failed_videos_report_filename)
 
                 timestamp_str = f"Generated on: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 

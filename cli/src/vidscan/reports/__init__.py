@@ -1,7 +1,12 @@
 import os
+import re
 from typing import Callable
 
 from ..models import FolderData, VideoFile
+
+def natural_sort_key(s: str) -> list[str | int]:
+    parts = re.split(r"(\d+)", s)
+    return [int(p) if p.isdigit() else p.lower() for p in parts]
 
 def sort_results(
         folders: list[FolderData],
@@ -11,8 +16,8 @@ def sort_results(
         video_reverse: bool
 ):
     
-    folder_sort_keys: dict[str, Callable[[FolderData], str | float | int]] = {
-        'name':     lambda f: os.path.basename(f.path).lower(),
+    folder_sort_keys: dict[str, Callable[[FolderData], str | float | int | list[str | int]]] = {
+        'name':     lambda f: natural_sort_key(os.path.basename(f.path)),
         'duration': lambda f: f.total_seconds,
         'videos':   lambda f: f.video_count,
         'size':     lambda f: f.total_size,
@@ -20,7 +25,7 @@ def sort_results(
     }
 
     video_sort_keys: dict[str, Callable[[VideoFile], str | float | int | list[str | int]]] = {
-        'name':     lambda v: v.name,
+        'name':     lambda v: natural_sort_key(v.name),
         'duration': lambda v: v.duration,
         'size':     lambda v: v.size,
         'date':     lambda v: v.mtime

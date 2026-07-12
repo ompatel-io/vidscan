@@ -41,25 +41,25 @@ def parse_sort_flag(value: str, sort_options: list[str], flag_name: str) -> tupl
 def main():
     try:
         parser = argparse.ArgumentParser(
-            description="Scan media libraries across nested folders and generate reports.",
+            description="Scan media libraries across nested folders and generate reports",
             formatter_class=argparse.RawTextHelpFormatter
         )
         parser.add_argument(
             "folder_path",
-            help="The full path to the main folder you want to scan."
+            help="The full path to the main folder you want to scan"
         )
         parser.add_argument(
             "-e", "--exclude",
             nargs='+',
             default=[],
-            help="Space separated list of folder names to exclude from the scan (case sensitive)."
+            help="Space separated list of folder names to exclude from the scan (case sensitive)"
         )
         parser.add_argument(
             "-ext", "--extensions",
             nargs='+',
             help=(
-                "Space separated list of file extensions to scan (e.g. mp4 mkv webm).\n"
-                f"(default: {DEFAULT_VIDEO_EXTENSIONS})."
+                "Space separated list of file extensions to scan (e.g. mp4 mkv webm)\n"
+                f"(default: {' '.join(DEFAULT_VIDEO_EXTENSIONS)})"
             )
         )
         parser.add_argument(
@@ -67,8 +67,8 @@ def main():
             type=parse_w_flag,
             default=DEFAULT_W,
             help=(
-                f"Number of parallel threads to use (default: {DEFAULT_W} for your system)\n"
-                f"-w ssd : Uses an optimal {DEFAULT_W_SSD} for your system, provide it if you have an SSD\n"
+                f"Number of parallel threads to use (default: '{DEFAULT_W}' for your system).\n"
+                f"-w ssd : Uses an optimal '{DEFAULT_W_SSD}' for your system, provide it if you have an SSD\n"
                 "-w <n> : Manually provide threads (e.g. -w 6)\n"
             )
         )
@@ -76,25 +76,25 @@ def main():
             "-f", "--format",
             choices=['txt-summary', 'txt-detailed', 'csv', 'json', 'all'],
             default='txt-detailed',
-            help="Output report format (default: txt-detailed)."
+            help="Output report format (default: txt-detailed)"
         )
         parser.add_argument(
-            '-sf', '--sort-folders',
+            "-sf", "--sort-folders",
             type=lambda v: parse_sort_flag(v, ['name', 'duration', 'videos', 'size', 'date'], '--sort-folders'),
             default=('name', 'asc'),
             help=(
                 "Sort folders by: name, duration, videos, size, date\n"
-                "Optionally include sort order with colon: duration:desc\n"
+                "Optionally provide sort order with colon: duration:desc\n"
                 "Sort order is asc if not provided (default: name:asc)"
             )
         )
         parser.add_argument(
-            '-sv', '--sort-videos',
+            "-sv", "--sort-videos",
             type=lambda v: parse_sort_flag(v, ['name', 'duration', 'size', 'date'], '--sort-videos'),
             default=('name', 'asc'),
             help=(
-                "Sort folders by: name, duration, size, date\n"
-                "Optionally include sort order with colon: duration:desc\n"
+                "Sort videos by: name, duration, size, date\n"
+                "Optionally provide sort order with colon: duration:desc\n"
                 "Sort order is asc if not provided (default: name:asc)"
             )
         )

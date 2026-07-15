@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vidscan"
-version = "0.9.0"
-description = "Recursively scan media libraries and generate structured reports of duration, file count, and size per folder - powered by ffprobe."
+version = "1.0.0"
+description = "Concurrent media library scanner - folder and file level duration and size reports in txt, csv, and json via ffprobe"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/ompatel100/vidscan"
-"Bug Tracker" = "https://github.com/ompatel100/vidscan/issues"
+Homepage = "https://github.com/ompatel-io/vidscan"
+"Bug Tracker" = "https://github.com/ompatel-io/vidscan/issues"
 
 [project.scripts]
 vidscan = "vidscan.cli:main"

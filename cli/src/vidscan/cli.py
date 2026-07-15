@@ -41,7 +41,7 @@ def parse_sort_flag(value: str, sort_options: list[str], flag_name: str) -> tupl
 def main():
     try:
         parser = argparse.ArgumentParser(
-            description="Scan media libraries across nested folders and generate reports",
+            description="Scan media libraries recursively and generate structured folder and file level reports of duration and size in txt, csv, or json - powered by ffprobe",
             formatter_class=argparse.RawTextHelpFormatter
         )
         parser.add_argument(

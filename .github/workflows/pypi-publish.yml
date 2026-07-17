@@ -1,0 +1,90 @@
+name: Publish vidscan cli to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  # Separate build step from publish step
+  # Build step runs arbitrary code from dependencies and should not have access to PyPI OIDC tokens
+  build:
+    name: Build distribution packages
+    # Only run if tag cli/v*
+    if: startsWith(github.ref_name, 'cli/v')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
+
+      # Save built wheels/tarballs as temporary github artifacts for next publish jobs to use safely
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: cli/dist/
+          # Delete artifact after 1 day as no use afterwards
+          retention-days: 1
+  
+  publish-to-testpypi:
+    name: Publish to TestPyPI
+    needs: build # Only run if build succeeds
+    runs-on: ubuntu-latest
+    environment:
+      name: test-pypi
+      url: https://test.pypi.org/p/vidscan
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+  
+  publish-to-pypi:
+    name: Publish to PyPI
+    needs: publish-to-testpypi # Only run if TestPyPI upload succeeds
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vidscan
+
+    permissions:
+      id-token: write  # Allows github to request OIDC token for trusted publishing
+      contents: read   # Explicitly defining permissions overrides defaults. Restore read access
+
+    steps:
+      # Download artifacts from build job to dist/
+      # The PyPI publishing action looks in dist/ by default
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

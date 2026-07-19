@@ -1,0 +1,43 @@
+[changelog]
+header = """
+# VidScan CLI Changelog
+"""
+
+body = """
+{% if version %}
+## [{{ version | trim_start_matches(pat="cli/v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}
+## [Unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}
+- {{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+tag_pattern = "cli/v[0-9]*"
+sort_commits = "oldest"
+
+commit_parsers = [
+  { message = "\\(web\\)", skip = true },
+  { message = "\\(benchmarks\\)", skip = true },
+
+  { message = "^feat", group = "Added" },
+  { message = "^fix", group = "Fixed" },
+  { message = "^refactor", group = "Changed" },
+  { message = "^perf", group = "Changed" },
+  { message = "^build", group = "Changed" },
+
+  { message = "^chore", group = "--- REVIEW: chore" },
+  { message = "^docs", group = "--- REVIEW: docs" },
+  { message = "^ci", group = "--- REVIEW: ci" },
+
+  { message = ".*", group = "--- REVIEW: no category" },
+]

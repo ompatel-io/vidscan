@@ -1,6 +1,6 @@
-# vidscan
+# vidscan (CLI)
 
-Scan media libraries recursively and generate structured folder and file level reports of duration and size in txt, csv, or json - powered by ffprobe.
+Scan media libraries including every subfolder and generate structured folder and file level reports of duration and size in txt, csv or json with failed files listed in the reports.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ No additional packages are installed. vidscan has zero pip dependencies. Safe to
 
 ## Quick Start
 
-Provide the folder path. It scans it and all subfolders recursively, and generates report in the same folder.
+Provide the folder path. It scans it and all subfolders, and generates report in the scanned folder by default.
 
 Windows
 
@@ -33,7 +33,7 @@ macOS / Linux
 vidscan /media/projects
 ```
 
-Report is saved in the scanned folder. If any files fail, a separate failed files report is saved alongside it. The default output report is `txt-detailed`. Run `vidscan --help` to see all options.
+The default output report is `txt-detailed`. Run `vidscan --help` to see all options.
 
 ## Output Example (default txt-detailed)
 
@@ -65,7 +65,7 @@ GRAND TOTAL
 Generated on: 2026-04-29 14:53:39
 ```
 
-Failed files are caught, with the reason for failure, and a separate report is generated alongside the main one. They are never silently dropped.
+Failed files are caught with the reason for failure, and a separate report is generated alongside the main txt report (for other reports, failed files are included in the report itself).
 
 ## Why vidscan
 
@@ -73,7 +73,7 @@ Four things were kept at the center of how vidscan was built.
 
 ### Coverage
 
-- Scans any folder structure recursively to any depth. The traversal is stack based, not recursive, so deeply nested libraries do not hit Python's call stack limit. Works on local drives, external drives, and network drives.
+- Scans any folder structure to any depth. The traversal is stack based, not recursive, so deeply nested libraries do not hit Python's call stack limit. Works on local drives, external drives, and network drives.
 
 - `--extensions` defines exactly which file types are included, `--exclude` defines which folders are skipped entirely. The default covers common video formats, but since ffprobe supports virtually any media format, vidscan can be used on audio libraries, mixed media archives, or broadcast formats such as MXF by specifying extensions.
 

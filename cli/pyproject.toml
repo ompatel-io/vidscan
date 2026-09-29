@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vidscan"
 version = "1.0.0"
-description = "Concurrent media library scanner - folder and file level duration and size reports in txt, csv, and json via ffprobe"
+description = "Media library scanner - folder and file level duration and size reports in txt, csv, or json with failed files listed in the reports"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"

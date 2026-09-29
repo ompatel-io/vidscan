@@ -22,19 +22,19 @@ def parse_w_flag(value: str) -> int:
         return min(w, MAX_W)
         
     except ValueError:
-        if value.strip().lower() == 'ssd':
+        if value.strip().lower() == "ssd":
             return DEFAULT_W_SSD
         
         raise argparse.ArgumentTypeError(f"--workers must be a number or 'ssd'.")
 
 def parse_sort_flag(value: str, sort_options: list[str], flag_name: str) -> tuple[str, str]:
-    split_values = value.split(':', 1)
+    split_values = value.split(":", 1)
     sort_by = split_values[0].strip()
-    order = split_values[1].strip() if len(split_values) > 1 else 'asc'
+    order = split_values[1].strip() if len(split_values) > 1 else "asc"
 
     if sort_by not in sort_options:
         raise argparse.ArgumentTypeError(f"Invalid option '{sort_by}' for {flag_name} Choose from: {', '.join(sort_options)}")
-    if order not in ('asc', 'desc'):
+    if order not in ("asc", "desc"):
         raise argparse.ArgumentTypeError(f"Invalid order '{order}'. Choose asc or desc.")
     return sort_by, order
 
@@ -50,13 +50,13 @@ def main():
         )
         parser.add_argument(
             "-e", "--exclude",
-            nargs='+',
+            nargs="+",
             default=[],
             help="Space separated list of folder names to exclude from the scan (case sensitive)"
         )
         parser.add_argument(
             "-ext", "--extensions",
-            nargs='+',
+            nargs="+",
             help=(
                 "Space separated list of file extensions to scan (e.g. mp4 mkv webm)\n"
                 f"(default: {' '.join(DEFAULT_VIDEO_EXTENSIONS)})"
@@ -74,8 +74,8 @@ def main():
         )
         parser.add_argument(
             "-r", "--report",
-            choices=['txt-summary', 'txt-detailed', 'csv', 'json', 'all'],
-            default='txt-detailed',
+            choices=["txt-summary", "txt-detailed", "csv", "json", "all"],
+            default="txt-detailed",
             help="Output report type (default: txt-detailed)"
         )
         parser.add_argument(
@@ -88,8 +88,8 @@ def main():
         )
         parser.add_argument(
             "-sf", "--sort-folders",
-            type=lambda v: parse_sort_flag(v, ['name', 'duration', 'videos', 'size', 'date'], '--sort-folders'),
-            default=('name', 'asc'),
+            type=lambda v: parse_sort_flag(v, ["name", "duration", "videos", "size", "date"], "--sort-folders"),
+            default=("name", "asc"),
             help=(
                 "Sort folders by: name, duration, videos, size, date\n"
                 "Optionally provide sort order with colon: duration:desc\n"
@@ -98,8 +98,8 @@ def main():
         )
         parser.add_argument(
             "-sv", "--sort-videos",
-            type=lambda v: parse_sort_flag(v, ['name', 'duration', 'size', 'date'], '--sort-videos'),
-            default=('name', 'asc'),
+            type=lambda v: parse_sort_flag(v, ["name", "duration", "size", "date"], "--sort-videos"),
+            default=("name", "asc"),
             help=(
                 "Sort videos by: name, duration, size, date\n"
                 "Optionally provide sort order with colon: duration:desc\n"
@@ -158,11 +158,11 @@ def main():
                 print(ui.error(f"ERROR: Provided output path is not a directory: '{output_dir}'"))
                 sys.exit(1)
             
-            test_file = os.path.join(output_dir, '.vidscan_write_test')
+            test_file = os.path.join(output_dir, ".vidscan_write_test")
 
             try:
-                with open(test_file, 'w') as f:
-                    f.write('')
+                with open(test_file, "w") as f:
+                    f.write("")
                 os.remove(test_file)
             except PermissionError:
                 print(ui.error(f"ERROR: No write permission for provided output directory: '{output_dir}'"))
@@ -176,7 +176,7 @@ def main():
         excluded_folders = set(args.exclude)
 
         if args.extensions:
-            video_extensions = {ext.lower() if ext.startswith('.') else f'.{ext.lower()}' for ext in args.extensions}
+            video_extensions = {ext.lower() if ext.startswith(".") else f".{ext.lower()}" for ext in args.extensions}
         else:
             video_extensions = DEFAULT_VIDEO_EXTENSIONS
 
@@ -211,20 +211,20 @@ def main():
         sort_results(
             scan_result.folders,
             sort_folders_by,
-            sort_order_folders == 'desc',
+            sort_order_folders == "desc",
             sort_videos_by,
-            sort_order_videos == 'desc'
+            sort_order_videos == "desc"
         )
         
         folder_name = os.path.basename(os.path.normpath(scan_folder_path))
         timestamp = datetime.datetime.now()
         report_type = args.report
         
-        is_txt_summary = report_type == 'txt-summary'
-        is_txt_detailed = report_type == 'txt-detailed'
-        is_csv = report_type == 'csv'
-        is_json = report_type == 'json'
-        is_all = report_type == 'all'
+        is_txt_summary = report_type == "txt-summary"
+        is_txt_detailed = report_type == "txt-detailed"
+        is_csv = report_type == "csv"
+        is_json = report_type == "json"
+        is_all = report_type == "all"
 
         try:
             if is_csv or is_all:

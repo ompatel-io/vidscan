@@ -64,9 +64,9 @@ def get_video_duration(video_path: str, ffprobe_timeout_sec: float) -> tuple[flo
             "timeout": ffprobe_timeout_sec
         }
 
-        if os.name == 'nt':
+        if os.name == "nt":
             # CREATE_NO_WINDOW flag prevents creating cmd GUI, reducing overhead (Windows only, error for other os)
-            run_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+            run_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
 
         result = subprocess.run(command, **run_kwargs) # type: ignore
         

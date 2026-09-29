@@ -114,5 +114,5 @@ def write_json_report(scan_result:ScanResult, output_path: str, timestamp: datet
         failed_videos=failed_videos_formatted,
     )
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(report_structure, f, indent=4)

@@ -32,39 +32,39 @@ class UI:
     
 def get_ui() -> UI:
     # getattr fallback when stdout not have encoding attribute
-    stdout_encoding = getattr(sys.stdout, 'encoding', '')
-    is_utf8 = stdout_encoding and stdout_encoding.lower() in ['utf-8', 'utf8']
+    stdout_encoding = getattr(sys.stdout, "encoding", "")
+    is_utf8 = stdout_encoding and stdout_encoding.lower() in ["utf-8", "utf8"]
 
     if is_utf8:
-        bar_fill = '█'
-        bar_empty = '░'
-        spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        bar_fill = "█"
+        bar_empty = "░"
+        spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     else:
         # Fallback for terminals that don't support utf-8
-        bar_fill = '='
-        bar_empty = '-'
-        spinner = ['|', '/', '-', '\\']
+        bar_fill = "="
+        bar_empty = "-"
+        spinner = ["|", "/", "-", "\\"]
 
     is_terminal = sys.stdout.isatty()
 
     color = False
 
     # Flags used by CI/CD tools
-    if 'FORCE_COLOR' in os.environ or 'CLICOLOR_FORCE' in os.environ:
+    if "FORCE_COLOR" in os.environ or "CLICOLOR_FORCE" in os.environ:
         color = True
-    # 'NO_COLOR' standard (https://no-color.org/)
-    elif 'NO_COLOR' in os.environ:
+    # "NO_COLOR" standard (https://no-color.org/)
+    elif "NO_COLOR" in os.environ:
         color = False
     elif is_terminal and enable_ansi_windows():
         color = True
     if color:
-        red = '\033[91m'
-        yellow = '\033[93m'
-        green = '\033[92m'
-        cyan = '\033[96m'
-        reset = '\033[0m'
+        red = "\033[91m"
+        yellow = "\033[93m"
+        green = "\033[92m"
+        cyan = "\033[96m"
+        reset = "\033[0m"
     else:
-        red = yellow = green = cyan = reset = ''
+        red = yellow = green = cyan = reset = ""
 
     return UI(
         is_terminal=is_terminal,

@@ -132,7 +132,7 @@ def write_txt_report(lines: list[str], output_path: str, timestamp_str: str) -> 
     lines.append(timestamp_str)
     report_content = "\n".join(lines)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(report_content)
 
     return report_content

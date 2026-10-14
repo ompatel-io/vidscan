@@ -1,10 +1,9 @@
 import { formatDuration, formatSize, isVideo, getFolderName } from "./utils.js";
-import {
-  getFiles,
-  runQueue,
-  getNativeDuration,
-  getWasmDuration,
-} from "./scanner.js";
+import { getFiles } from "./scanner.js";
+import { processNativeFiles } from "./native.js";
+import { processWasmFiles } from "./wasm.js";
+
+const NATIVE_EXT_RE = /\.(mp4|webm|mov|m4v)$/i;
 
 const state = {
   folderMap: new Map(),
@@ -79,22 +78,36 @@ els.input.addEventListener("change", (e) => {
 
 els.resetBtn.addEventListener("click", () => location.reload());
 
-function getNativeConcurrent() {
-  const userInput = window.prompt(
-    "Enter no. of concurrent files for browser native formats:",
+function getConcurrency() {
+  const userInputNative = window.prompt(
+    "Enter browser native concurrency:",
     "1",
   );
-  return parseInt(userInput, 10) || 1;
+  const userInputWasm = window.prompt("Enter mediainfo wasm concurrency:", "1");
+  return {
+    nativeConcurrency: parseInt(userInputNative, 10) || 1,
+    wasmConcurrency: parseInt(userInputWasm, 10) || 1,
+  };
 }
 
 function handleFiles(rawFiles) {
   const videoFiles = rawFiles.filter(isVideo);
 
   if (videoFiles.length > 0) {
-    const nativeConcurrent = getNativeConcurrent();
+    const { nativeConcurrency, wasmConcurrency } = getConcurrency();
+
+    const nativeTimeoutMs = 10000;
+    const wasmTimeoutMs = 10000;
 
     initializeFolders(videoFiles);
-    processFiles(videoFiles, nativeConcurrent);
+
+    processFiles(
+      videoFiles,
+      nativeConcurrency,
+      nativeTimeoutMs,
+      wasmConcurrency,
+      wasmTimeoutMs,
+    );
   }
 }
 
@@ -123,62 +136,6 @@ function initializeFolders(files) {
 
   state.folderMap.forEach((data, name) => updateFolderRow(name));
   updateTotalStats();
-}
-
-async function processFiles(files, nativeConcurrent) {
-  state.isScanning = true;
-  let processedCount = 0;
-
-  const updateProgress = (fileName) => {
-    processedCount++;
-    els.status.innerText = `> Processed ${processedCount} of ${files.length}... (${fileName})`;
-  };
-
-  const nativeFiles = [];
-  const wasmFiles = [];
-
-  files.forEach((file) => {
-    if (file.name.match(/\.(mp4|webm|mov|m4v)$/i)) {
-      nativeFiles.push(file);
-    } else {
-      wasmFiles.push(file);
-    }
-  });
-
-  const processNativeFile = async (file) => {
-    try {
-      let duration = 0;
-      try {
-        duration = await getNativeDuration(file);
-      } catch (err) {
-        duration = await getWasmDuration(file);
-      }
-      saveDurationToState(file, duration);
-    } catch (e) {
-      console.warn(`Failed both native and wasm for: ${file.name}`);
-    } finally {
-      updateProgress(file.name);
-    }
-  };
-
-  const processWasmFile = async (file) => {
-    try {
-      const duration = await getWasmDuration(file);
-      saveDurationToState(file, duration);
-    } catch (e) {
-      console.warn(`Failed wasm for: ${file.name}`);
-    } finally {
-      updateProgress(file.name);
-    }
-  };
-
-  await Promise.all([
-    runQueue(nativeFiles, nativeConcurrent, processNativeFile),
-    runQueue(wasmFiles, 1, processWasmFile),
-  ]);
-
-  els.status.innerText = "> Scan Complete.";
-  state.isScanning = false;
 }
 
 function saveDurationToState(file, duration) {
@@ -221,4 +178,55 @@ function updateTotalStats() {
   els.totalCount.innerText = totalFiles;
   els.totalSize.innerText = formatSize(totalSize);
   els.totalDur.innerText = formatDuration(state.total.duration);
+}
+
+async function processFiles(
+  files,
+  nativeConcurrency,
+  nativeTimeoutMs,
+  wasmConcurrency,
+  wasmTimeoutMs,
+) {
+  state.isScanning = true;
+
+  const successResults = [];
+  const failedResults = [];
+
+  const nativeQueue = [];
+  let wasmQueue = [];
+
+  files.forEach((file) => {
+    if (NATIVE_EXT_RE.test(file.name)) nativeQueue.push(file);
+    else wasmQueue.push(file);
+  });
+
+  const progressCallbackFn = ({ result, completed }) => {
+    els.status.innerText = `> Processed ${completed} of ${files.length}... (${result.file.name})`;
+    if (result.success) saveDurationToState(result.file, result.duration);
+  };
+
+  const nativeFailed = [];
+
+  processNativeFiles(
+    nativeQueue,
+    successResults,
+    failedResults,
+    nativeConcurrency,
+    nativeTimeoutMs,
+    progressCallbackFn,
+  );
+
+  wasmQueue.push(...nativeFailed);
+
+  processWasmFiles(
+    wasmQueue,
+    successResults,
+    failedResults,
+    wasmConcurrency,
+    wasmTimeoutMs,
+    progressCallbackFn,
+  );
+
+  els.status.innerText = "> Scan Complete.";
+  state.isScanning = false;
 }

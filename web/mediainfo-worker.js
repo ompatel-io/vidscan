@@ -5,6 +5,14 @@ let mediainfoInstance = null;
 self.onmessage = async (e) => {
   const file = e.data;
 
+  if (!file || file.size === 0) {
+    self.postMessage({
+      success: false,
+      message: !file ? "File not provided" : "File size 0",
+    });
+    return;
+  }
+
   try {
     if (!mediainfoInstance) {
       mediainfoInstance = await MediaInfo.mediaInfoFactory({
@@ -19,25 +27,57 @@ self.onmessage = async (e) => {
     };
 
     const result = await mediainfoInstance.analyzeData(file.size, readChunk);
+    const tracks = result?.media?.track;
 
-    const generalTrack = result.media.track.find(
-      (t) => t["@type"] === "General",
-    );
-    const durationSec =
-      generalTrack && generalTrack.Duration
-        ? parseFloat(generalTrack.Duration)
-        : 0;
+    if (!Array.isArray(tracks) || tracks.length === 0) {
+      self.postMessage({
+        success: false,
+        message: "File unrecognized or not supported by mediainfo",
+      });
+      return;
+    }
+
+    const generalTrack = tracks.find((t) => t["@type"] === "General");
+    const videoTrack = tracks.find((t) => t["@type"] === "Video");
+    const audioTrack = tracks.find((t) => t["@type"] === "Audio");
+
+    const durationFieldExists =
+      (generalTrack && "Duration" in generalTrack) ||
+      (videoTrack && "Duration" in videoTrack) ||
+      (audioTrack && "Duration" in audioTrack);
+
+    if (!durationFieldExists) {
+      self.postMessage({
+        success: false,
+        message: "Duration field not found in any mediainfo track",
+      });
+      return;
+    }
+
+    const mediainfoDurationSec =
+      generalTrack?.Duration ?? videoTrack?.Duration ?? audioTrack?.Duration;
+
+    const durationSec = parseFloat(mediainfoDurationSec);
+
+    if (!Number.isFinite(durationSec) || durationSec <= 0) {
+      self.postMessage({
+        success: false,
+        message: `Mediainfo returned duration '${mediainfoDurationSec}'`,
+      });
+      return;
+    }
 
     self.postMessage({
       success: true,
-      fileName: file.name,
       duration: durationSec,
     });
-  } catch (error) {
+  } catch (err) {
     self.postMessage({
       success: false,
-      fileName: file.name,
-      error: error.message || error,
+      error:
+        err.message ||
+        String(err) ||
+        "An unknown error occurred in mediainfo worker",
     });
   }
 };

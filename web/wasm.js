@@ -1,9 +1,18 @@
+const WASM_URL = new URL(
+  "./mediainfo.js/MediaInfoModule.wasm",
+  import.meta.url,
+);
+
 const WORKER_URL = new URL("./mediainfo-worker.js", import.meta.url);
 
 let CONCURRENCY = 1;
 let TIMEOUT_MS = 10000;
 
 let workers = [];
+
+export function prefetchWasm() {
+  fetch(WASM_URL).catch(() => {});
+}
 
 function addWorkerEventListeners(workerHandle) {
   workerHandle.worker.addEventListener("message", (e) =>

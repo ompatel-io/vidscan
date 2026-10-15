@@ -1,7 +1,7 @@
 import { formatDuration, formatSize, isVideo, getFolderName } from "./utils.js";
 import { getFiles } from "./scanner.js";
 import { processNativeFiles } from "./native.js";
-import { processWasmFiles } from "./wasm.js";
+import { processWasmFiles, prefetchWasm } from "./wasm.js";
 
 const NATIVE_EXT_RE = /\.(mp4|webm|mov|m4v)$/i;
 
@@ -199,6 +199,10 @@ async function processFiles(
     if (NATIVE_EXT_RE.test(file.name)) nativeQueue.push(file);
     else wasmQueue.push(file);
   });
+
+  if (wasmQueue.length > 0) {
+    prefetchWasm();
+  }
 
   const progressCallbackFn = ({ result, completed }) => {
     els.status.innerText = `> Processed ${completed} of ${files.length}... (${result.file.name})`;

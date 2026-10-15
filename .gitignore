@@ -6,6 +6,3 @@ build/
 __pycache__/
 *.py[codz]
 *$py.class
-
-eslint.config.js
-.vscode/

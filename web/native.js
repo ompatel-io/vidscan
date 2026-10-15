@@ -18,10 +18,14 @@ export function getNativeResult(file, timeoutMs = TIMEOUT_MS) {
     let settled = false;
 
     const cleanup = () => {
+      // clear handlers first before load to prevent metadata/error events
       video.onloadedmetadata = null;
       video.onerror = null;
+      // remove src before load, so no source to fetch on
       video.removeAttribute("src");
+      // media element load algorith without src: abort active work and reset
       video.load();
+      // remove reference from browser memory
       URL.revokeObjectURL(objectUrl);
     };
 

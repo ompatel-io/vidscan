@@ -10,10 +10,13 @@ let TIMEOUT_MS = 10000;
 
 let workers = [];
 
+// prefetch to browser http cache, useful for start download early for cases of slow network
 export function prefetchWasm() {
   fetch(WASM_URL).catch(() => {});
 }
 
+// event listener per task will cause garbage collection overhead and risk of leaks
+// single event listener per worker lifetime, callback is changed per task
 function addWorkerEventListeners(workerHandle) {
   workerHandle.worker.addEventListener("message", (e) =>
     workerHandle.workerOnMessage?.(e),
@@ -63,6 +66,7 @@ function getWasmResult(file, workerHandle, timeoutMs = TIMEOUT_MS) {
     };
 
     const timer = setTimeout(() => {
+      // wasm state untrusted after hang
       respawnWorker(workerHandle);
       cleanup();
       resolve({
@@ -79,6 +83,7 @@ function getWasmResult(file, workerHandle, timeoutMs = TIMEOUT_MS) {
 
     const onError = (err) => {
       cleanup();
+      // wasm state untrusted after crash
       respawnWorker(workerHandle);
       resolve({
         success: false,
@@ -109,6 +114,7 @@ export async function processWasmFiles(
 
   const workerFn = async (workerHandle) => {
     while (index < files.length) {
+      // assign current values synchronously before await, other workers will increment index concurrently  while this worker await
       const currIdx = index++;
       const file = files[currIdx];
 

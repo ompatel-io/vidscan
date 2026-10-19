@@ -6,3 +6,8 @@ build/
 __pycache__/
 *.py[codz]
 *$py.class
+
+vidscan_benchmark*/
+*.csv
+*.txt
+*.json

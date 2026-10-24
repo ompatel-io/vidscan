@@ -1,0 +1,23 @@
+{
+  "folders": [
+    {
+      "name": "vidscan",
+      "path": ".",
+    },
+    {
+      "name": "benchmarks",
+      "path": "benchmarks",
+    },
+    {
+      "name": "cli",
+      "path": "cli",
+    },
+    {
+      "name": "web",
+      "path": "web",
+    },
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "vidscan",
+  },
+}

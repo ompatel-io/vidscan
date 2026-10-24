@@ -21,6 +21,7 @@ export default [
         alert: "readonly",
         location: "readonly",
         navigator: "readonly",
+        performance: "readonly",
       },
     },
     rules: {

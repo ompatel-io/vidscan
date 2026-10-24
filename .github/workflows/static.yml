@@ -1,8 +1,6 @@
-# Simple workflow for deploying static content to GitHub Pages
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
     # Runs only if changes are made in web folder or static.yml
@@ -10,7 +8,7 @@ on:
       - "web/**"
       - ".github/workflows/static.yml"
 
-  # Allows you to run this workflow manually from the Actions tab
+  # For running this workflow manually from the Actions tab
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -19,14 +17,13 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# If pushed again while one is running, cancel the old one
 concurrency:
+  # Limit deployments to one at a time for group - pages
   group: "pages"
+  # Cancel running deployment if new pushed, save CI minutes
   cancel-in-progress: true
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
@@ -38,8 +35,10 @@ jobs:
         with:
           # Shallow clone (don't need the full git history to deploy), also save CI minutes
           fetch-depth: 1
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -47,6 +46,7 @@ jobs:
           path: "./web"
           # Delete old artifact zips after 1 day, save storage
           retention-days: 1
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

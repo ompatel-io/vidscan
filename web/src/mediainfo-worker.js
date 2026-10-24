@@ -1,4 +1,4 @@
-importScripts("./mediainfo.js/index.min.js");
+importScripts("./mediainfo/index.min.js");
 
 let mediainfoInstance = null;
 
@@ -17,7 +17,7 @@ self.onmessage = async (e) => {
     if (!mediainfoInstance) {
       mediainfoInstance = await MediaInfo.mediaInfoFactory({
         format: "object",
-        locateFile: () => "./mediainfo.js/MediaInfoModule.wasm",
+        locateFile: () => "./mediainfo/MediaInfoModule.wasm",
       });
     }
 

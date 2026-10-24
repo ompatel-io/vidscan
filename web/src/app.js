@@ -1,5 +1,5 @@
 import { formatDuration, formatSize, isVideo, getFolderName } from "./utils.js";
-import { getFiles } from "./scanner.js";
+import { getFiles } from "./filesystem.js";
 import { processNativeFiles } from "./native.js";
 import { processWasmFiles, prefetchWasm } from "./wasm.js";
 

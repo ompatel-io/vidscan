@@ -1,9 +1,6 @@
 import { performanceWrapper } from "./utils.js";
 
-const WASM_URL = new URL(
-  "./mediainfo.js/MediaInfoModule.wasm",
-  import.meta.url,
-);
+const WASM_URL = new URL("./mediainfo/MediaInfoModule.wasm", import.meta.url);
 
 const WORKER_URL = new URL("./mediainfo-worker.js", import.meta.url);
 
@@ -14,7 +11,9 @@ let workers = [];
 
 // prefetch to browser http cache, useful for start download early for cases of slow network
 export function prefetchWasm() {
-  fetch(WASM_URL).catch(() => {});
+  fetch(WASM_URL).catch((err) => {
+    console.warn(err);
+  });
 }
 
 // event listener per task will cause garbage collection overhead and risk of leaks

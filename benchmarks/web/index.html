@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VidScan Web Benchmark</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+        margin: 0;
+        padding: 1.25rem 1.5rem;
+        max-width: 1200px;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin: 0 0 1rem 0;
+      }
+      h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 0 0 0.6rem 0;
+      }
+      .panel {
+        border: 1px solid #8883;
+        border-radius: 2px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+      .row-target {
+        display: grid;
+        grid-template-columns: auto minmax(140px, 1fr) minmax(220px, 2fr);
+        gap: 1rem;
+        align-items: start;
+        margin-bottom: 1rem;
+      }
+      .row-params {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .row-params .field {
+        width: 140px;
+      }
+      .radio-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        height: 30px;
+      }
+      .radio-group label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin: 0;
+        font-weight: 500;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="file"] {
+        height: 30px;
+        padding: 0.25rem 0.5rem;
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #8884;
+        border-radius: 2px;
+        background: transparent;
+        font-family: inherit;
+        font-size: 0.8rem;
+      }
+      input[type="file"] {
+        padding: 0.15rem 0.3rem;
+        cursor: pointer;
+      }
+      input[type="file"]::file-selector-button {
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid #8885;
+        background: #8882;
+        color: inherit;
+        border-radius: 2px;
+        padding: 0.15rem 0.5rem;
+        margin-right: 0.5rem;
+        cursor: pointer;
+      }
+      input[type="file"]::file-selector-button:hover {
+        background: #8884;
+        border-color: #8888;
+      }
+      button {
+        padding: 0.45rem 1.2rem;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 0.8rem;
+        border-radius: 2px;
+        border: 1px solid #8885;
+        background: #8882;
+        color: inherit;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        background: #8884;
+        border-color: #8888;
+      }
+      button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      #run-btn {
+        border-color: #8888;
+        background: #8883;
+      }
+      #run-btn:hover:not(:disabled) {
+        background: #8885;
+        border-color: #888a;
+      }
+      #file-count {
+        font-size: 0.8rem;
+        opacity: 0.75;
+        margin: 0.2rem 0 0.85rem 0;
+      }
+      #status {
+        font-family: inherit;
+        font-size: 0.8rem;
+        margin: 0.6rem 0 0.2rem 0;
+        min-height: 1.2em;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+      }
+      th,
+      td {
+        border: 1px solid #8883;
+        padding: 0.35rem 0.6rem;
+        text-align: right;
+      }
+      th:first-child,
+      td:first-child,
+      th:nth-child(2),
+      td:nth-child(2) {
+        text-align: left;
+      }
+      th {
+        background: #8881;
+        border-color: #8884;
+        font-weight: 600;
+        font-size: 0.78rem;
+      }
+      @media (max-width: 768px) {
+        body {
+          padding: 1rem;
+        }
+        .row-target {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>VidScan Web Benchmark</h1>
+
+    <div class="panel">
+      <div class="row-target">
+        <div>
+          <label>Method</label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="method" value="WASM" checked />
+              WASM
+            </label>
+            <label>
+              <input type="radio" name="method" value="Native" />
+              Native
+            </label>
+          </div>
+        </div>
+        <div>
+          <label for="ext-input">Extensions (comma separated)</label>
+          <input
+            type="text"
+            id="ext-input"
+            value=".mkv"
+            placeholder=".mp4, .mkv"
+          />
+        </div>
+        <div>
+          <label for="folder-input">Folder</label>
+          <input
+            type="file"
+            id="folder-input"
+            webkitdirectory
+            directory
+            multiple
+          />
+        </div>
+      </div>
+
+      <div class="row-params">
+        <div class="field">
+          <label for="concurrency-input">Concurrency</label>
+          <input type="number" id="concurrency-input" value="1" min="1" />
+        </div>
+        <div class="field">
+          <label for="timeout-input">Timeout (ms)</label>
+          <input
+            type="number"
+            id="timeout-input"
+            value="10000"
+            min="500"
+            step="1000"
+          />
+        </div>
+      </div>
+
+      <div id="file-count">No folder selected.</div>
+      <button id="run-btn" disabled>Run</button>
+      <div id="status"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Results</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Method</th>
+            <th>Concurrency</th>
+            <th>Files</th>
+            <th>Total ms</th>
+            <th>Files/sec</th>
+            <th>Avg ms</th>
+            <th>Success</th>
+            <th>Failed</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+      <div style="margin-top: 1rem">
+        <button id="export-csv-btn" disabled>Export CSV</button>
+      </div>
+    </div>
+
+    <script type="module" src="./benchmark.js"></script>
+  </body>
+</html>

@@ -26,3 +26,12 @@ export function getFolderName(file) {
   }
   return pathParts.join("/");
 }
+
+export async function performanceWrapper(fn, propertyName = "parseMs") {
+  const start = performance.now();
+  const result = await fn();
+  if (result && typeof result === "object") {
+    result[propertyName] = Math.round(performance.now() - start);
+  }
+  return result;
+}

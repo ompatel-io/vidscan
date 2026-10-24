@@ -1,3 +1,5 @@
+import { performanceWrapper } from "./utils.js";
+
 const WASM_URL = new URL(
   "./mediainfo.js/MediaInfoModule.wasm",
   import.meta.url,
@@ -118,7 +120,10 @@ export async function processWasmFiles(
       const currIdx = index++;
       const file = files[currIdx];
 
-      let result = await getWasmResult(file, workerHandle, timeoutMs);
+      let result = await performanceWrapper(
+        () => getWasmResult(file, workerHandle, timeoutMs),
+        "parseMs",
+      );
 
       result.file = file;
 

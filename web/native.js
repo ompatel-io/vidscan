@@ -1,3 +1,5 @@
+import { performanceWrapper } from "./utils.js";
+
 let CONCURRENCY = 1;
 let TIMEOUT_MS = 10000;
 
@@ -89,7 +91,10 @@ export async function processNativeFiles(
       const currIdx = index++;
       const file = files[currIdx];
 
-      let result = await getNativeResult(file, timeoutMs);
+      let result = await performanceWrapper(
+        () => getNativeResult(file, timeoutMs),
+        "parseMs",
+      );
 
       result.file = file;
 

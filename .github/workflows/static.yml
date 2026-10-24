@@ -3,9 +3,9 @@ name: Deploy static content to Pages
 on:
   push:
     branches: ["main"]
-    # Runs only if changes are made in web folder or static.yml
+    # Runs only if changes are made in web/src folder or static.yml
     paths:
-      - "web/**"
+      - "web/src/**"
       - ".github/workflows/static.yml"
 
   # For running this workflow manually from the Actions tab
@@ -42,8 +42,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload ./web
-          path: "./web"
+          # Upload ./web/src
+          path: "./web/src"
           # Delete old artifact zips after 1 day, save storage
           retention-days: 1
 

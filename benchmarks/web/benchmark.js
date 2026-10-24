@@ -1,5 +1,5 @@
-import { processWasmFiles } from "../../web/wasm.js";
-import { processNativeFiles } from "../../web/native.js";
+import { processWasmFiles } from "../../web/src/wasm.js";
+import { processNativeFiles } from "../../web/src/native.js";
 
 const folderInput = document.getElementById("folder-input");
 const extInput = document.getElementById("ext-input");
